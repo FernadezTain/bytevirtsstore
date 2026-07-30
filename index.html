@@ -148,18 +148,54 @@
 
   @media (prefers-reduced-motion: reduce){ *{animation-duration:.001ms !important; transition-duration:.001ms !important;} }
 
-  .admin-tabs{display:flex; gap:8px; margin-bottom:16px;}
-  .admin-tab{border-radius:12px; padding:8px 16px; font-size:13px; font-weight:600; border:1px solid var(--border); background:var(--surface); color:var(--text-muted);}
+  .admin-tabs{display:flex; gap:8px; margin-bottom:16px; width:100%; max-width:560px; margin-left:auto; margin-right:auto;}
+  .admin-tab{flex:1; text-align:center; border-radius:12px; padding:10px 16px; font-size:13px; font-weight:600; border:1px solid var(--border); background:var(--surface); color:var(--text-muted); transition:background .2s, color .2s;}
   .admin-tab.active{border-color:transparent; color:#fff; background:linear-gradient(90deg,var(--accent),var(--accent-2));}
-  .admin-tab-panel{max-width:520px; margin:0 auto;}
-#page-admin.active{display:flex; flex-direction:column; align-items:center;}
-#page-admin > div:first-child{width:100%; max-width:520px; margin:0 auto;}
-.admin-tabs{width:100%; max-width:520px; margin:0 auto;}
-  select.auth-input{width:100%; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:12px 14px; color:var(--text); font-size:14px; outline:none; margin:0;}
-  .admin-row{display:flex; align-items:center; justify-content:space-between; gap:10px; border:1px solid var(--border-soft); background:var(--surface); border-radius:14px; padding:12px 14px; margin-bottom:8px; font-size:13px;}
+  .admin-tab-panel{width:100%; max-width:560px; margin:0 auto;}
+  #page-admin.active{display:flex; flex-direction:column; align-items:center;}
+  #page-admin > div:first-child{width:100%; max-width:560px; margin:0 auto;}
+
+  .admin-card{border:1px solid var(--border); background:var(--surface); border-radius:20px; padding:18px; margin-bottom:20px;}
+  .admin-form-grid{display:grid; grid-template-columns:1fr; gap:12px;}
+
+  .auth-input select, select.auth-input{
+    width:100%; background:transparent; border:none; outline:none;
+    color:var(--text); font-size:14px; appearance:none; -webkit-appearance:none; -moz-appearance:none;
+    padding:0; margin:0;
+  }
+  .select-wrap{
+    position:relative; display:flex; align-items:center;
+    border:1px solid var(--border); background:var(--surface); border-radius:16px; padding:12px 14px;
+  }
+  .select-wrap select{ padding-right:20px; }
+  .select-wrap::after{
+    content:""; position:absolute; right:14px; top:50%; width:8px; height:8px;
+    border-right:2px solid var(--text-muted); border-bottom:2px solid var(--text-muted);
+    transform:translateY(-70%) rotate(45deg); pointer-events:none;
+  }
+
+  .check-row{
+    display:flex; align-items:center; gap:10px; border:1px solid var(--border); background:var(--surface);
+    border-radius:16px; padding:12px 14px; font-size:13px; color:var(--text-muted);
+  }
+  .check-row input{width:16px; height:16px; accent-color:var(--accent); flex-shrink:0;}
+
+  .admin-list-title{font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-faint); margin:0 0 10px;}
+
+  .admin-row{display:flex; align-items:center; justify-content:space-between; gap:12px; border:1px solid var(--border-soft); background:var(--surface); border-radius:14px; padding:14px; margin-bottom:8px; font-size:13px;}
+  .admin-row-info{min-width:0; flex:1;}
+  .admin-row-info b{display:block; font-size:13px; color:var(--text); margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .admin-row-info .meta{display:block; margin-top:2px; font-size:12px; color:var(--text-faint);}
   .admin-row-actions{display:flex; gap:8px; flex-shrink:0;}
-  .admin-row-actions button{font-size:12px; font-weight:600; padding:6px 10px; border-radius:8px; border:1px solid var(--border); color:var(--text-muted); background:var(--bg-elevated);}
+  .admin-row-actions button{font-size:12px; font-weight:600; padding:7px 12px; border-radius:9px; border:1px solid var(--border); color:var(--text-muted); background:var(--bg-elevated); transition:border-color .2s, color .2s;}
+  .admin-row-actions button:hover{color:var(--text); border-color:var(--border);}
   .admin-row-actions button.danger{color:var(--danger); border-color:rgba(255,92,92,.3);}
+  .admin-row-actions button.danger:hover{background:rgba(255,92,92,.1);}
+
+  @media (min-width:480px){
+    .admin-form-grid.two-col{grid-template-columns:1fr 1fr;}
+    .admin-form-grid.two-col .span-2{grid-column:1 / -1;}
+  }
 
   /* ================= DESKTOP / WIDE SCREENS ================= */
   @media (min-width: 720px){
@@ -334,26 +370,29 @@
     </div>
 
     <div id="admin-tab-accounts" class="admin-tab-panel">
-      <form class="auth-form" style="margin-bottom:16px;" onsubmit="addAccount(event)">
-        <div class="auth-input"><input id="new-acc-title" type="text" placeholder="Название товара" required /></div>
-        <select id="new-acc-server" class="auth-input"></select>
-        <div class="auth-input"><input id="new-acc-level" type="number" placeholder="Уровень" value="1" /></div>
-        <div class="auth-input"><input id="new-acc-price" type="number" placeholder="Цена, ₽" required /></div>
-        <div class="auth-input"><input id="new-acc-tags" type="text" placeholder="Теги через запятую (АК-47, Бронежилет x5)" /></div>
-        <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-muted);">
-          <input id="new-acc-verified" type="checkbox" /> Проверенный продавец
-        </label>
-        <button type="submit" class="btn-primary">Добавить товар</button>
-      </form>
+      <div class="admin-card">
+        <form class="admin-form-grid two-col" onsubmit="addAccount(event)">
+          <div class="auth-input span-2"><input id="new-acc-title" type="text" placeholder="Название товара" required /></div>
+          <div class="select-wrap"><select id="new-acc-server"></select></div>
+          <div class="auth-input"><input id="new-acc-level" type="number" placeholder="Уровень" value="1" /></div>
+          <div class="auth-input"><input id="new-acc-price" type="number" placeholder="Цена, ₽" required /></div>
+          <label class="check-row"><input id="new-acc-verified" type="checkbox" /> Проверенный продавец</label>
+          <div class="auth-input span-2"><input id="new-acc-tags" type="text" placeholder="Теги через запятую (АК-47, Бронежилет x5)" /></div>
+          <button type="submit" class="btn-primary span-2">Добавить товар</button>
+        </form>
+      </div>
+      <p class="admin-list-title">Список товаров</p>
       <div id="admin-accounts-list"></div>
     </div>
-
     <div id="admin-tab-servers" class="admin-tab-panel" style="display:none;">
-      <form class="auth-form" style="margin-bottom:16px;" onsubmit="addServer(event)">
-        <div class="auth-input"><input id="new-server-name" type="text" placeholder="Название сервера (Sandy Shores)" required /></div>
-        <div class="auth-input"><input id="new-server-slug" type="text" placeholder="slug (sandy-shores)" required /></div>
-        <button type="submit" class="btn-primary">Добавить сервер</button>
-      </form>
+      <div class="admin-card">
+        <form class="admin-form-grid two-col" onsubmit="addServer(event)">
+          <div class="auth-input"><input id="new-server-name" type="text" placeholder="Название сервера (Sandy Shores)" required /></div>
+          <div class="auth-input"><input id="new-server-slug" type="text" placeholder="slug (sandy-shores)" required /></div>
+          <button type="submit" class="btn-primary span-2">Добавить сервер</button>
+        </form>
+      </div>
+      <p class="admin-list-title">Список серверов</p>
       <div id="admin-servers-list"></div>
     </div>
   </section>
@@ -362,10 +401,6 @@
 
 <nav class="bottomnav" aria-label="Основная навигация">
   <div class="nav-wrap">
-    <div class="ball-track" id="ball-track">
-      <div class="ball" id="ball"></div>
-      <div class="ball-shadow"></div>
-    </div>
     <div class="nav-island">
       <div class="nav-pill" id="nav-pill"></div>
       <button class="nav-btn active" data-page="home" onclick="goTo('home')">
@@ -622,7 +657,7 @@ async function loadAdminServers() {
     const servers = await adminFetch("/api/admin/servers");
     list.innerHTML = servers.length ? servers.map(s => `
       <div class="admin-row">
-        <div><b>${s.name}</b> <span class="font-mono" style="color:var(--text-faint)">(${s.slug})</span></div>
+        <div class="admin-row-info"><b>${s.name}</b><span class="meta font-mono">${s.slug}</span></div>
         <div class="admin-row-actions">
           <button onclick='editServerPrompt(${JSON.stringify(s)})'>Изменить</button>
           <button class="danger" onclick="deleteServer('${s.id}')">Удалить</button>
@@ -682,7 +717,7 @@ async function loadAdminAccounts() {
     const accounts = await adminFetch("/api/admin/accounts");
     list.innerHTML = accounts.length ? accounts.map(a => `
       <div class="admin-row">
-        <div><b>${a.title}</b><br><span style="color:var(--text-faint); font-size:12px;">${(a.server && a.server.name) || "—"} · LVL ${a.level} · ${fmt(a.price)} ₽ · ${a.status}</span></div>
+        <div class="admin-row-info"><b>${a.title}</b><span class="meta">${(a.server && a.server.name) || "—"} · LVL ${a.level} · ${fmt(a.price)} ₽ · ${a.status}</span></div>
         <div class="admin-row-actions">
           <button class="danger" onclick="deleteAccount('${a.id}')">Удалить</button>
         </div>
@@ -804,7 +839,7 @@ function goTo(page) {
 
   ballRotation += (newIndex - currentIndex) * 220;
   const ball = document.getElementById("ball");
-  ball.style.transform = `rotate(${ballRotation}deg)`;
+  if (ball) ball.style.transform = `rotate(${ballRotation}deg)`;
   document.getElementById("ball-track").style.left = `calc(${newIndex * 33.333}% + ${100/6}% - 10px)`;
 
   currentIndex = newIndex;
