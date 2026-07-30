@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>BLACKMARKET — аккаунты Black Russia</title>
+<meta name="description" content="Маркетплейс игровых аккаунтов Black Russia. Проверенные продавцы, гарантия сделки." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+
+<!-- Supabase client (only used if you fill in CONFIG below) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+  :root{
+    --bg:#0a0a0c; --bg-elevated:#101012; --surface:#17171b; --surface-2:#1e1e23;
+    --border:#29292f; --border-soft:#212127;
+    --accent:#ff3d1f; --accent-2:#ff8a3d; --accent-soft:rgba(255,61,31,.14);
+    --spark:#ffb020; --success:#35d68f; --danger:#ff5c5c;
+    --text:#f4f2ee; --text-muted:#9a9aa1; --text-faint:#5c5c63;
+    --font-display:'Bebas Neue', sans-serif; --font-body:'Manrope', system-ui, sans-serif; --font-mono:'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  html{color-scheme:dark;}
+  body{
+    margin:0; min-height:100dvh; color:var(--text); font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+    background:
+      radial-gradient(1100px 600px at 12% -10%, rgba(255,61,31,.16), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(255,138,61,.08), transparent 55%),
+      var(--bg);
+  }
+  a{color:inherit; text-decoration:none;}
+  button{font-family:inherit; cursor:pointer; border:none; background:none; color:inherit;}
+  input{font-family:inherit;}
+  ::selection{background:var(--accent); color:#fff;}
+  .font-display{font-family:var(--font-display); letter-spacing:.02em;}
+  .font-mono{font-family:var(--font-mono);}
+  .wrap{max-width:480px; margin:0 auto; padding:0 16px;}
+
+  /* top bar */
+  header.topbar{position:sticky; top:0; z-index:40; border-bottom:1px solid var(--border-soft); background:rgba(10,10,12,.85); backdrop-filter:blur(20px);}
+  .topbar-inner{display:flex; align-items:center; justify-content:space-between; padding:12px 16px;}
+  .logo{display:flex; align-items:center; gap:8px;}
+  .logo-badge{width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:18px; color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent-2));}
+  .logo-text{font-family:var(--font-display); font-size:20px; letter-spacing:.03em;}
+  .logo-text span{color:var(--accent);}
+  .guarantee{display:flex; align-items:center; gap:6px; border:1px solid var(--border); background:var(--surface); border-radius:999px; padding:6px 12px; font-size:11px; color:var(--text-muted);}
+  .guarantee svg{color:var(--success);}
+
+  main{padding-bottom:112px; padding-top:16px; min-height:100dvh;}
+  .page{display:none; animation:fadeUp .4s cubic-bezier(.22,1,.36,1) both;}
+  .page.active{display:block;}
+  @keyframes fadeUp{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+
+  /* hero */
+  .hero{position:relative; overflow:hidden; border:1px solid var(--border); background:var(--surface); border-radius:24px; padding:20px; margin-bottom:24px;}
+  .hero::before{content:""; position:absolute; right:-40px; top:-64px; width:192px; height:192px; border-radius:50%; background:var(--accent); opacity:.3; filter:blur(60px);}
+  .hero-inner{position:relative;}
+  .badge{display:inline-flex; align-items:center; gap:6px; border-radius:999px; background:var(--accent-soft); color:var(--accent); font-size:11px; font-weight:700; padding:5px 10px; margin-bottom:12px;}
+  .hero h1{font-family:var(--font-display); font-size:34px; line-height:.95; letter-spacing:.02em; color:#fff; margin:0 0 8px;}
+  .hero p{max-width:30ch; font-size:14px; color:var(--text-muted); margin:0;}
+
+  .rail{display:flex; gap:8px; overflow-x:auto; margin-bottom:16px; scrollbar-width:none;}
+  .rail::-webkit-scrollbar{height:0;}
+  .chip{flex-shrink:0; border-radius:999px; padding:8px 16px; font-size:12px; font-weight:600; border:1px solid var(--border); background:var(--surface); color:var(--text-muted); white-space:nowrap;}
+  .chip.active{border:none; color:#fff; background:linear-gradient(90deg,var(--accent),var(--accent-2));}
+
+  .section-title{display:flex; align-items:center; gap:6px; margin-bottom:12px;}
+  .section-title svg{color:var(--accent);}
+  .section-title h2{font-family:var(--font-display); font-size:18px; letter-spacing:.02em; color:#fff; margin:0;}
+
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; padding-bottom:24px;}
+  .empty{border:1px dashed var(--border); background:var(--surface); border-radius:16px; padding:32px; text-align:center; font-size:13px; color:var(--text-muted);}
+  .empty code{font-family:var(--font-mono); color:var(--accent);}
+
+  /* account card */
+  .card{position:relative; overflow:hidden; border-radius:16px; border:1px solid var(--border); background:var(--surface); transition:border-color .2s;}
+  .card:hover{border-color:rgba(255,61,31,.4);}
+  .card-media{position:relative; height:112px; display:flex; align-items:center; justify-content:center; overflow:hidden; background:linear-gradient(135deg,var(--surface-2),var(--bg-elevated));}
+  .card-media span{font-family:var(--font-display); font-size:36px; letter-spacing:.03em; color:rgba(255,255,255,.1);}
+  .pill-views{position:absolute; left:10px; top:10px; display:flex; align-items:center; gap:4px; border-radius:999px; background:rgba(0,0,0,.5); backdrop-filter:blur(4px); padding:4px 8px; font-size:11px; color:var(--text-muted);}
+  .pill-verified{position:absolute; right:10px; top:10px; display:flex; align-items:center; gap:4px; border-radius:999px; background:rgba(53,214,143,.15); padding:4px 8px; font-size:11px; font-weight:700; color:var(--success);}
+  .reserved-overlay{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.6); backdrop-filter:blur(1px);}
+  .reserved-overlay span{border:1px solid rgba(255,255,255,.2); border-radius:999px; padding:4px 12px; font-size:12px; font-weight:600; color:#fff;}
+  .card-body{padding:14px;}
+  .card-meta{display:flex; align-items:center; gap:8px; font-size:11px; color:var(--text-muted); margin-bottom:6px;}
+  .card-meta .lvl{border-radius:6px; background:var(--accent-soft); color:var(--accent); font-family:var(--font-mono); padding:2px 6px;}
+  .card-title{font-weight:600; font-size:14px; line-height:1.3; margin:0 0 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .card-tags{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;}
+  .card-tags span{border:1px solid var(--border-soft); border-radius:6px; padding:2px 6px; font-size:10.5px; color:var(--text-muted);}
+  .card-footer{display:flex; align-items:center; justify-content:space-between; border-top:1px solid var(--border-soft); padding-top:10px;}
+  .card-rating{display:flex; align-items:center; gap:4px; font-size:11px; color:var(--text-muted);}
+  .card-rating svg{color:var(--spark); fill:var(--spark);}
+  .card-rating .seller{color:var(--text-faint);}
+  .card-price{font-family:var(--font-mono); font-weight:700; font-size:16px; color:#fff;}
+
+  .skeleton{height:224px; border-radius:16px; border:1px solid var(--border); background:var(--surface); animation:pulse 1.4s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+  /* search */
+  .search-title{font-family:var(--font-display); font-size:26px; letter-spacing:.02em; color:#fff; margin:0 0 16px;}
+  .search-box{display:flex; align-items:center; gap:8px; border:1px solid var(--border); background:var(--surface); border-radius:16px; padding:12px 14px; margin-bottom:20px;}
+  .search-box svg{color:var(--text-muted); flex-shrink:0;}
+  .search-box input{flex:1; background:none; border:none; outline:none; color:var(--text); font-size:14px;}
+  .search-box input::placeholder{color:var(--text-faint);}
+  .search-box button{color:var(--text-muted); display:flex;}
+
+  /* profile */
+  .profile-title{font-family:var(--font-display); font-size:26px; letter-spacing:.02em; color:#fff; margin:0 0 4px;}
+  .profile-sub{font-size:14px; color:var(--text-muted); margin:0 0 20px;}
+  .auth-form{display:flex; flex-direction:column; gap:12px;}
+  .auth-input{display:flex; align-items:center; gap:8px; border:1px solid var(--border); background:var(--surface); border-radius:16px; padding:12px 14px;}
+  .auth-input svg{color:var(--text-muted); flex-shrink:0;}
+  .auth-input input{flex:1; background:none; border:none; outline:none; color:var(--text); font-size:14px;}
+  .auth-input input::placeholder{color:var(--text-faint);}
+  .btn-primary{border-radius:16px; padding:13px; text-align:center; font-size:14px; font-weight:700; color:#fff; background:linear-gradient(90deg,var(--accent),var(--accent-2)); box-shadow:0 8px 24px rgba(255,61,31,.35);}
+  .btn-secondary{display:flex; align-items:center; justify-content:center; gap:8px; width:100%; border-radius:16px; border:1px solid var(--border); background:var(--surface); padding:13px; font-size:14px; font-weight:600; color:var(--text-muted);}
+  .notice-ok{border:1px solid rgba(53,214,143,.3); background:rgba(53,214,143,.1); border-radius:16px; padding:14px; font-size:13px; color:var(--success);}
+  .error-text{font-size:12px; color:var(--danger); margin:0;}
+  .profile-card{border:1px solid var(--border); background:var(--surface); border-radius:24px; padding:20px; margin-bottom:20px;}
+  .profile-head{display:flex; align-items:center; gap:12px; margin-bottom:16px;}
+  .avatar{width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:24px; color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent-2));}
+  .profile-name{font-family:var(--font-display); font-size:20px; letter-spacing:.02em; color:#fff; margin:0;}
+  .profile-rating{display:flex; align-items:center; gap:4px; font-size:12px; color:var(--text-muted);}
+  .profile-rating svg{color:var(--spark); fill:var(--spark);}
+  .stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .stat-box{border:1px solid var(--border-soft); background:var(--bg-elevated); border-radius:16px; padding:14px;}
+  .stat-label{display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-muted); margin-bottom:6px;}
+  .stat-value{font-family:var(--font-mono); font-weight:700; font-size:17px; color:#fff;}
+  .stat-value.text{font-family:var(--font-body); font-size:14px;}
+
+  /* bottom nav */
+  nav.bottomnav{position:fixed; inset-inline:0; bottom:0; z-index:50; padding:12px 16px calc(env(safe-area-inset-bottom,0) + 16px);}
+  .nav-wrap{position:relative; max-width:420px; margin:0 auto;}
+  .ball-track{position:absolute; top:-14px; height:20px; width:20px; transition:left .5s cubic-bezier(.22,1,.36,1); pointer-events:none;}
+  .ball{width:20px; height:20px; border-radius:50%; transition:transform .5s cubic-bezier(.22,1,.36,1); box-shadow:0 4px 10px rgba(255,61,31,.55); background:radial-gradient(circle at 32% 28%, #ffb37a, var(--accent-2) 40%, var(--accent) 78%); position:relative;}
+  .ball::after{content:""; position:absolute; inset:0; border-radius:50%; border-top:1px solid rgba(255,255,255,.4); opacity:.6;}
+  .ball-shadow{width:12px; height:4px; margin:2px auto 0; border-radius:999px; background:rgba(0,0,0,.6); filter:blur(2px); opacity:.7;}
+  .nav-island{position:relative; display:flex; align-items:center; justify-content:space-between; border-radius:28px; border:1px solid var(--border); background:rgba(23,23,27,.9); backdrop-filter:blur(20px); padding:8px; box-shadow:0 10px 40px rgba(0,0,0,.55);}
+  .nav-pill{position:absolute; top:8px; bottom:8px; left:8px; width:calc(33.333% - 5.33px); border-radius:20px; transition:transform .5s cubic-bezier(.22,1,.36,1); background:linear-gradient(135deg,var(--accent),var(--accent-2)); box-shadow:0 6px 18px rgba(255,61,31,.35);}
+  .nav-btn{position:relative; z-index:1; display:flex; flex:1; flex-direction:column; align-items:center; justify-content:center; gap:4px; border-radius:20px; padding:10px 8px;}
+  .nav-btn svg{color:var(--text-muted); transition:color .3s;}
+  .nav-btn span{font-size:11px; font-weight:600; color:var(--text-muted); transition:color .3s;}
+  .nav-btn.active svg, .nav-btn.active span{color:#fff;}
+
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:.001ms !important; transition-duration:.001ms !important;} }
+
+  .admin-tabs{display:flex; gap:8px; margin-bottom:16px;}
+  .admin-tab{border-radius:12px; padding:8px 16px; font-size:13px; font-weight:600; border:1px solid var(--border); background:var(--surface); color:var(--text-muted);}
+  .admin-tab.active{border-color:transparent; color:#fff; background:linear-gradient(90deg,var(--accent),var(--accent-2));}
+  .admin-tab-panel{max-width:520px;}
+  select.auth-input{width:100%; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:12px 14px; color:var(--text); font-size:14px; outline:none; margin:0;}
+  .admin-row{display:flex; align-items:center; justify-content:space-between; gap:10px; border:1px solid var(--border-soft); background:var(--surface); border-radius:14px; padding:12px 14px; margin-bottom:8px; font-size:13px;}
+  .admin-row-actions{display:flex; gap:8px; flex-shrink:0;}
+  .admin-row-actions button{font-size:12px; font-weight:600; padding:6px 10px; border-radius:8px; border:1px solid var(--border); color:var(--text-muted); background:var(--bg-elevated);}
+  .admin-row-actions button.danger{color:var(--danger); border-color:rgba(255,92,92,.3);}
+
+  /* ================= DESKTOP / WIDE SCREENS ================= */
+  @media (min-width: 720px){
+    .wrap{max-width:900px; padding:0 24px;}
+    .topbar-inner{max-width:1200px; margin:0 auto; padding:14px 24px;}
+    main{padding-top:28px; padding-bottom:64px;}
+    .grid{grid-template-columns:repeat(3, 1fr); gap:16px;}
+    .hero{display:flex; align-items:center; gap:32px; padding:36px 40px;}
+    .hero-inner{flex:1;}
+    .hero h1{font-size:48px;}
+    .hero p{max-width:42ch; font-size:15px;}
+    .hero::after{
+      content:""; flex-shrink:0; width:220px; height:220px; border-radius:28px;
+      background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,.12), transparent 60%),
+        linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow:0 20px 60px rgba(255,61,31,.35);
+    }
+    .rail{margin-bottom:20px;}
+    .search-box, .search-title{max-width:640px;}
+    .auth-form, .profile-card, .btn-secondary{max-width:420px;}
+    nav.bottomnav{padding-bottom:24px;}
+    .nav-wrap{max-width:440px;}
+  }
+
+  @media (min-width: 1100px){
+    .wrap{max-width:1180px;}
+    .topbar-inner{max-width:1200px;}
+    .grid{grid-template-columns:repeat(4, 1fr); gap:18px;}
+    .hero h1{font-size:56px;}
+  }
+
+  @media (min-width: 720px) and (hover:hover){
+    .card{transition:transform .25s, border-color .2s;}
+    .card:hover{transform:translateY(-3px);}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a href="#" class="logo" onclick="goTo('home'); return false;">
+      <span class="logo-badge">Б</span>
+      <span class="logo-text">BLACK<span>MARKET</span></span>
+    </a>
+    <div class="guarantee">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+      <span>Гарант сделки</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ================= ГЛАВНАЯ ================= -->
+  <section id="page-home" class="page active">
+    <div class="hero">
+      <div class="hero-inner">
+        <div class="badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 11-14h-7l1-6Z"/></svg>
+          Сделка под гарантом
+        </div>
+        <h1>АККАУНТЫ<br/>BLACK RUSSIA</h1>
+        <p>Покупай и продавай прокачанные аккаунты без риска — деньги замораживаются до подтверждения передачи доступа.</p>
+      </div>
+    </div>
+
+    <div class="rail" id="server-rail"></div>
+
+    <div class="section-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a6.5 6.5 0 1 1-13 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5Z"/></svg>
+      <h2>В ТРЕНДЕ</h2>
+    </div>
+
+    <div id="home-grid" class="grid"></div>
+  </section>
+
+  <!-- ================= ПОИСК ================= -->
+  <section id="page-search" class="page">
+    <h1 class="search-title">ПОИСК АККАУНТОВ</h1>
+    <div class="search-box">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="search-input" type="text" placeholder="Название, сервер, предмет..." />
+      <button id="search-clear" style="display:none;" onclick="clearSearch()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="search-grid" class="grid"></div>
+  </section>
+
+  <!-- ================= ПРОФИЛЬ ================= -->
+  <section id="page-profile" class="page">
+    <div id="profile-loading">
+      <div class="skeleton" style="height:160px;"></div>
+    </div>
+
+    <div id="profile-signed-out" style="display:none;">
+      <h1 class="profile-title">ВХОД В АККАУНТ</h1>
+      <p class="profile-sub">Отправим ссылку для входа на почту — без паролей.</p>
+      <div id="signin-sent" class="notice-ok" style="display:none;"></div>
+      <form id="signin-form" class="auth-form" onsubmit="handleSignIn(event)">
+        <div class="auth-input">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
+          <input id="signin-email" type="email" required placeholder="you@example.com" />
+        </div>
+        <p id="signin-error" class="error-text" style="display:none;"></p>
+        <button type="submit" class="btn-primary">Получить ссылку для входа</button>
+      </form>
+      <p style="margin-top:16px; font-size:12px; color:var(--text-faint);">Supabase не подключён? Заполните <code class="font-mono">SUPABASE_CONFIG</code> внизу файла — без этого вход не будет работать, но каталог и поиск доступны на демо-данных.</p>
+    </div>
+
+    <div id="profile-signed-in" style="display:none;">
+      <div class="profile-card">
+        <div class="profile-head">
+          <div class="avatar" id="profile-avatar">?</div>
+          <div>
+            <h1 class="profile-name" id="profile-username">—</h1>
+            <div class="profile-rating">
+              <svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <span id="profile-rating">0.0</span>
+              <span class="seller" id="profile-deals">· 0 сделок</span>
+            </div>
+          </div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-box">
+            <div class="stat-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Баланс</div>
+            <div class="stat-value" id="profile-balance">0 ₽</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>Статус</div>
+            <div class="stat-value text" id="profile-status">Пользователь</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-secondary" id="admin-panel-btn" style="display:none; margin-bottom:10px;" onclick="openAdmin()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        Панель управления
+      </button>
+      <button class="btn-secondary" onclick="handleSignOut()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        Выйти из аккаунта
+      </button>
+    </div>
+  </section>
+
+  <!-- ================= АДМИН-ПАНЕЛЬ ================= -->
+  <section id="page-admin" class="page">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+      <button class="btn-secondary" style="width:auto; padding:10px 14px;" onclick="closeAdmin()">← Назад</button>
+      <h1 class="profile-title" style="margin:0;">ПАНЕЛЬ УПРАВЛЕНИЯ</h1>
+    </div>
+
+    <div class="admin-tabs">
+      <button class="admin-tab active" data-tab="accounts" onclick="switchAdminTab('accounts', this)">Товары</button>
+      <button class="admin-tab" data-tab="servers" onclick="switchAdminTab('servers', this)">Сервера</button>
+    </div>
+
+    <div id="admin-tab-accounts" class="admin-tab-panel">
+      <form class="auth-form" style="margin-bottom:16px;" onsubmit="addAccount(event)">
+        <div class="auth-input"><input id="new-acc-title" type="text" placeholder="Название товара" required /></div>
+        <select id="new-acc-server" class="auth-input"></select>
+        <div class="auth-input"><input id="new-acc-level" type="number" placeholder="Уровень" value="1" /></div>
+        <div class="auth-input"><input id="new-acc-price" type="number" placeholder="Цена, ₽" required /></div>
+        <div class="auth-input"><input id="new-acc-tags" type="text" placeholder="Теги через запятую (АК-47, Бронежилет x5)" /></div>
+        <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-muted);">
+          <input id="new-acc-verified" type="checkbox" /> Проверенный продавец
+        </label>
+        <button type="submit" class="btn-primary">Добавить товар</button>
+      </form>
+      <div id="admin-accounts-list"></div>
+    </div>
+
+    <div id="admin-tab-servers" class="admin-tab-panel" style="display:none;">
+      <form class="auth-form" style="margin-bottom:16px;" onsubmit="addServer(event)">
+        <div class="auth-input"><input id="new-server-name" type="text" placeholder="Название сервера (Sandy Shores)" required /></div>
+        <div class="auth-input"><input id="new-server-slug" type="text" placeholder="slug (sandy-shores)" required /></div>
+        <button type="submit" class="btn-primary">Добавить сервер</button>
+      </form>
+      <div id="admin-servers-list"></div>
+    </div>
+  </section>
+
+</main>
+
+<nav class="bottomnav" aria-label="Основная навигация">
+  <div class="nav-wrap">
+    <div class="ball-track" id="ball-track">
+      <div class="ball" id="ball"></div>
+      <div class="ball-shadow"></div>
+    </div>
+    <div class="nav-island">
+      <div class="nav-pill" id="nav-pill"></div>
+      <button class="nav-btn active" data-page="home" onclick="goTo('home')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
+        <span>Главная</span>
+      </button>
+      <button class="nav-btn" data-page="search" onclick="goTo('search')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <span>Поиск</span>
+      </button>
+      <button class="nav-btn" data-page="profile" onclick="goTo('profile')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        <span>Профиль</span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<script>
+/* =========================================================
+   1. НАСТРОЙКА SUPABASE
+   Впишите свои значения из Supabase → Project Settings → API.
+   Если оставить пустым — сайт работает на демо-данных, а вход
+   в профиль будет недоступен.
+   ========================================================= */
+let supabaseClient = null;
+
+async function initSupabase() {
+  try {
+    const res = await fetch('/api/config');
+    const cfg = await res.json();
+    if (cfg.url && cfg.anonKey && window.supabase) {
+      supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey);
+    }
+  } catch (e) {
+    console.error('Не удалось получить конфигурацию Supabase', e);
+  }
+}
+
+async function adminFetch(url, options = {}) {
+  if (!supabaseClient) throw new Error('Supabase не настроен');
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+  if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+  const res = await fetch(url, { ...options, headers });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.error || 'Ошибка запроса');
+  return json;
+}
+
+/* =========================================================
+   2. ДЕМО-ДАННЫЕ (используются, если Supabase не настроен)
+   ========================================================= */
+const mockAccounts = [
+  { id:"1", title:"Дом в Los Santos + 3 бизнеса", server:"Sandy Shores", level:187, price:8900, views:342, is_verified:true, status:"active", warehouse_items:["АК-47","Бронежилет x5"], seller:{username:"StreetKing", rating:4.9, deals_count:128} },
+  { id:"2", title:"Топовый донат-акк, все машины", server:"Rio", level:240, price:15400, views:891, is_verified:true, status:"active", warehouse_items:["Adder","Zentorno"], seller:{username:"RioTrade", rating:4.8, deals_count:76} },
+  { id:"3", title:"Стартовый аккаунт для новичка", server:"Sandy Shores", level:34, price:650, views:54, is_verified:false, status:"active", warehouse_items:["Pistol","Kevlar"], seller:{username:"NewbieShop", rating:4.4, deals_count:19} },
+  { id:"4", title:"Криминальная фракция + оружейный склад", server:"Rio", level:156, price:6200, views:217, is_verified:true, status:"active", warehouse_items:["M4A1 x3","РПГ"], seller:{username:"MafiaDeals", rating:4.7, deals_count:54} },
+  { id:"5", title:"Бизнес-империя: 5 автосалонов", server:"Sandy Shores", level:301, price:24900, views:1204, is_verified:true, status:"reserved", warehouse_items:["Autosalon x5","VIP-гараж"], seller:{username:"EmpireBR", rating:5.0, deals_count:203} },
+  { id:"6", title:"Полицейская фракция, звание майор", server:"Rio", level:210, price:5400, views:133, is_verified:false, status:"active", warehouse_items:["Служебное оружие"], seller:{username:"LawOrder", rating:4.6, deals_count:41} }
+];
+
+async function getAccounts({ query, server } = {}) {
+  if (!supabaseClient) {
+    let results = mockAccounts.filter(a => a.status === "active" || a.status === "reserved");
+    if (query) { const q = query.toLowerCase(); results = results.filter(a => a.title.toLowerCase().includes(q)); }
+    if (server) results = results.filter(a => a.server === server);
+    return results;
+  }
+  let q = supabaseClient.from("accounts")
+    .select("*, server:servers(id, name), seller:profiles!accounts_seller_id_fkey(username, rating, deals_count)")
+    .in("status", ["active", "reserved"])
+    .order("created_at", { ascending: false });
+  if (query) q = q.ilike("title", `%${query}%`);
+  const { data, error } = await q;
+  if (error) { console.error(error); return []; }
+  let mapped = (data || []).map(a => ({
+    ...a,
+    server: a.server?.name || "—",
+    warehouse_items: a.tags || []
+  }));
+  if (server) mapped = mapped.filter(a => a.server === server);
+  return mapped;
+}
+
+async function getServers() {
+  if (!supabaseClient) {
+    return [...new Set(mockAccounts.map(a => a.server))].map(name => ({ name }));
+  }
+  const { data, error } = await supabaseClient.from("servers").select("*").order("sort_order");
+  if (error) { console.error(error); return []; }
+  return data || [];
+}
+
+/* =========================================================
+   3. РЕНДЕР КАРТОЧЕК
+   ========================================================= */
+const fmt = n => new Intl.NumberFormat("ru-RU").format(n);
+const fmtCompact = n => new Intl.NumberFormat("ru-RU", { notation:"compact" }).format(n);
+
+function cardHTML(a) {
+  const reserved = a.status === "reserved";
+  const items = (a.warehouse_items || []).slice(0,2).map(i => `<span>${i}</span>`).join("");
+  return `
+  <article class="card">
+    <div class="card-media">
+      <span>${a.server}</span>
+      <div class="pill-views">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+        ${fmtCompact(a.views || 0)}
+      </div>
+      ${a.is_verified ? `<div class="pill-verified"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>Проверен</div>` : ""}
+      ${reserved ? `<div class="reserved-overlay"><span>В резерве</span></div>` : ""}
+    </div>
+    <div class="card-body">
+      <div class="card-meta"><span class="lvl">LVL ${a.level}</span><span>${a.server}</span></div>
+      <h3 class="card-title">${a.title}</h3>
+      <div class="card-tags">${items}</div>
+      <div class="card-footer">
+        <div class="card-rating">
+          <svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          ${(a.seller && a.seller.rating || 0).toFixed(1)}
+          <span class="seller">· ${(a.seller && a.seller.username) || "продавец"}</span>
+        </div>
+        <div class="card-price">${fmt(a.price)} ₽</div>
+      </div>
+    </div>
+  </article>`;
+}
+
+function skeletons(n) {
+  return Array.from({length:n}).map(() => `<div class="skeleton"></div>`).join("");
+}
+
+/* =========================================================
+   4. СТРАНИЦА «ГЛАВНАЯ»
+   ========================================================= */
+async function loadHome() {
+  const grid = document.getElementById("home-grid");
+  grid.innerHTML = skeletons(4);
+  const servers = await getServers();
+  renderServerRail(servers);
+  const accounts = await getAccounts();
+  renderHomeGrid(accounts);
+}
+
+function renderServerRail(servers) {
+  const rail = document.getElementById("server-rail");
+  rail.innerHTML = `<button class="chip active" onclick="filterByServer('', this)">Все сервера</button>` +
+    servers.map(s => `<button class="chip" onclick="filterByServer('${s.name}', this)">${s.name}</button>`).join("");
+}
+
+async function filterByServer(name, btn) {
+  document.querySelectorAll("#server-rail .chip").forEach(c => c.classList.remove("active"));
+  btn.classList.add("active");
+  const grid = document.getElementById("home-grid");
+  grid.innerHTML = skeletons(4);
+  const accounts = await getAccounts({ server: name || undefined });
+  renderHomeGrid(accounts);
+}
+
+function renderHomeGrid(accounts) {
+  const grid = document.getElementById("home-grid");
+  grid.innerHTML = accounts.length
+    ? accounts.map(cardHTML).join("")
+    : `<div class="empty" style="grid-column:1/-1;">Пока нет активных объявлений. Добавьте запись в таблицу <code>accounts</code> в Supabase.</div>`;
+}
+
+/* =========================================================
+   5. СТРАНИЦА «ПОИСК»
+   ========================================================= */
+let searchTimer = null;
+document.getElementById("search-input").addEventListener("input", (e) => {
+  document.getElementById("search-clear").style.display = e.target.value ? "flex" : "none";
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => runSearch(e.target.value), 300);
+});
+function clearSearch() {
+  const input = document.getElementById("search-input");
+  input.value = "";
+  document.getElementById("search-clear").style.display = "none";
+  runSearch("");
+}
+async function runSearch(query) {
+  const grid = document.getElementById("search-grid");
+  grid.innerHTML = skeletons(4);
+  const results = await getAccounts({ query });
+  grid.innerHTML = results.length
+    ? results.map(cardHTML).join("")
+    : `<div class="empty" style="grid-column:1/-1;">Ничего не найдено${query ? ` по запросу «${query}»` : ""}.</div>`;
+}
+
+/* =========================================================
+   6. СТРАНИЦА «ПРОФИЛЬ» (Supabase Auth — magic link)
+   ========================================================= */
+async function initProfile() {
+  if (!supabaseClient) {
+    document.getElementById("profile-loading").style.display = "none";
+    document.getElementById("profile-signed-out").style.display = "block";
+    return;
+  }
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  document.getElementById("profile-loading").style.display = "none";
+  if (user) showSignedIn(user); else showSignedOut();
+
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    if (session?.user) showSignedIn(session.user); else showSignedOut();
+  });
+}
+
+async function showSignedIn(user) {
+  document.getElementById("profile-signed-out").style.display = "none";
+  document.getElementById("profile-signed-in").style.display = "block";
+
+  let profile = null;
+  if (supabaseClient) {
+    const { data } = await supabaseClient.from("profiles").select("*").eq("id", user.id).single();
+    profile = data;
+  }
+  const username = (profile && profile.username) || user.email;
+  document.getElementById("profile-avatar").textContent = username.slice(0,1).toUpperCase();
+  document.getElementById("profile-username").textContent = username;
+  document.getElementById("profile-rating").textContent = (profile?.rating ?? 0).toFixed(1);
+  document.getElementById("profile-deals").textContent = `· ${profile?.deals_count ?? 0} сделок`;
+  document.getElementById("profile-balance").textContent = `${fmt(profile?.balance ?? 0)} ₽`;
+
+  const isAdmin = profile?.role === "admin";
+  document.getElementById("profile-status").textContent = isAdmin ? "Администратор" : "Пользователь";
+  document.getElementById("admin-panel-btn").style.display = isAdmin ? "flex" : "none";
+}
+
+function openAdmin() {
+  document.getElementById("page-profile").classList.remove("active");
+  document.getElementById("page-admin").classList.add("active");
+  loadAdminServers();
+  loadAdminAccounts();
+}
+function closeAdmin() {
+  document.getElementById("page-admin").classList.remove("active");
+  document.getElementById("page-profile").classList.add("active");
+}
+function switchAdminTab(tab, btn) {
+  document.querySelectorAll(".admin-tab").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById("admin-tab-accounts").style.display = tab === "accounts" ? "block" : "none";
+  document.getElementById("admin-tab-servers").style.display = tab === "servers" ? "block" : "none";
+}
+
+/* --- Сервера (категории) --- */
+async function loadAdminServers() {
+  const list = document.getElementById("admin-servers-list");
+  list.innerHTML = '<div class="empty">Загрузка...</div>';
+  try {
+    const servers = await adminFetch("/api/admin/servers");
+    list.innerHTML = servers.length ? servers.map(s => `
+      <div class="admin-row">
+        <div><b>${s.name}</b> <span class="font-mono" style="color:var(--text-faint)">(${s.slug})</span></div>
+        <div class="admin-row-actions">
+          <button onclick='editServerPrompt(${JSON.stringify(s)})'>Изменить</button>
+          <button class="danger" onclick="deleteServer('${s.id}')">Удалить</button>
+        </div>
+      </div>`).join("") : '<div class="empty">Серверов пока нет.</div>';
+  } catch (e) {
+    list.innerHTML = `<div class="empty">Ошибка: ${e.message}</div>`;
+  }
+}
+async function addServer(e) {
+  e.preventDefault();
+  const name = document.getElementById("new-server-name").value.trim();
+  const slug = document.getElementById("new-server-slug").value.trim();
+  if (!name || !slug) return;
+  try {
+    await adminFetch("/api/admin/servers", { method: "POST", body: JSON.stringify({ name, slug, sort_order: 0 }) });
+    document.getElementById("new-server-name").value = "";
+    document.getElementById("new-server-slug").value = "";
+    loadAdminServers();
+    loadHome();
+  } catch (e) { alert(e.message); }
+}
+function editServerPrompt(s) {
+  const newName = prompt("Название сервера", s.name);
+  if (newName === null) return;
+  const newSlug = prompt("Slug (латиницей)", s.slug);
+  if (newSlug === null) return;
+  updateServer(s.id, newName, newSlug, s.sort_order);
+}
+async function updateServer(id, name, slug, sort_order) {
+  try {
+    await adminFetch("/api/admin/servers", { method: "PUT", body: JSON.stringify({ id, name, slug, sort_order }) });
+    loadAdminServers();
+    loadHome();
+  } catch (e) { alert(e.message); }
+}
+async function deleteServer(id) {
+  if (!confirm("Удалить сервер? Связанные товары останутся без категории.")) return;
+  try {
+    await adminFetch("/api/admin/servers", { method: "DELETE", body: JSON.stringify({ id }) });
+    loadAdminServers();
+    loadHome();
+  } catch (e) { alert(e.message); }
+}
+
+/* --- Товары --- */
+async function populateAdminServerSelect() {
+  const select = document.getElementById("new-acc-server");
+  const servers = await getServers();
+  select.innerHTML = servers.map(s => `<option value="${s.id || ""}">${s.name}</option>`).join("");
+}
+async function loadAdminAccounts() {
+  await populateAdminServerSelect();
+  const list = document.getElementById("admin-accounts-list");
+  list.innerHTML = '<div class="empty">Загрузка...</div>';
+  try {
+    const accounts = await adminFetch("/api/admin/accounts");
+    list.innerHTML = accounts.length ? accounts.map(a => `
+      <div class="admin-row">
+        <div><b>${a.title}</b><br><span style="color:var(--text-faint); font-size:12px;">${(a.server && a.server.name) || "—"} · LVL ${a.level} · ${fmt(a.price)} ₽ · ${a.status}</span></div>
+        <div class="admin-row-actions">
+          <button class="danger" onclick="deleteAccount('${a.id}')">Удалить</button>
+        </div>
+      </div>`).join("") : '<div class="empty">Товаров пока нет.</div>';
+  } catch (e) {
+    list.innerHTML = `<div class="empty">Ошибка: ${e.message}</div>`;
+  }
+}
+async function addAccount(e) {
+  e.preventDefault();
+  const title = document.getElementById("new-acc-title").value.trim();
+  const server_id = document.getElementById("new-acc-server").value || null;
+  const level = Number(document.getElementById("new-acc-level").value) || 1;
+  const price = Number(document.getElementById("new-acc-price").value) || 0;
+  const tags = document.getElementById("new-acc-tags").value.split(",").map(t => t.trim()).filter(Boolean);
+  const is_verified = document.getElementById("new-acc-verified").checked;
+  try {
+    await adminFetch("/api/admin/accounts", { method: "POST", body: JSON.stringify({ title, server_id, level, price, tags, is_verified, status: "active" }) });
+    document.getElementById("new-acc-title").value = "";
+    document.getElementById("new-acc-price").value = "";
+    document.getElementById("new-acc-tags").value = "";
+    document.getElementById("new-acc-verified").checked = false;
+    loadAdminAccounts();
+    loadHome();
+  } catch (e) { alert(e.message); }
+}
+async function deleteAccount(id) {
+  if (!confirm("Удалить товар?")) return;
+  try {
+    await adminFetch("/api/admin/accounts", { method: "DELETE", body: JSON.stringify({ id }) });
+    loadAdminAccounts();
+    loadHome();
+  } catch (e) { alert(e.message); }
+}
+
+function showSignedOut() {
+  document.getElementById("profile-signed-in").style.display = "none";
+  document.getElementById("profile-signed-out").style.display = "block";
+}
+
+async function handleSignIn(e) {
+  e.preventDefault();
+  const email = document.getElementById("signin-email").value;
+  const errEl = document.getElementById("signin-error");
+  errEl.style.display = "none";
+  if (!supabaseClient) {
+    errEl.textContent = "Supabase не настроен: впишите SUPABASE_CONFIG в начале <script>.";
+    errEl.style.display = "block";
+    return;
+  }
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email, options: { emailRedirectTo: window.location.href }
+  });
+  if (error) { errEl.textContent = error.message; errEl.style.display = "block"; return; }
+  document.getElementById("signin-form").style.display = "none";
+  const sent = document.getElementById("signin-sent");
+  sent.textContent = `Письмо отправлено на ${email}. Перейдите по ссылке, чтобы войти.`;
+  sent.style.display = "block";
+}
+
+async function handleSignOut() {
+  if (supabaseClient) await supabaseClient.auth.signOut();
+  showSignedOut();
+}
+
+/* =========================================================
+   7. НИЖНЯЯ НАВИГАЦИЯ + КАТАЮЩИЙСЯ ШАРИК
+   ========================================================= */
+const pageOrder = ["home", "search", "profile"];
+let currentIndex = 0;
+let ballRotation = 0;
+
+function goTo(page) {
+  const newIndex = pageOrder.indexOf(page);
+  if (newIndex === -1) return;
+
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.getElementById(`page-${page}`).classList.add("active");
+
+  document.querySelectorAll(".nav-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.page === page);
+  });
+
+  document.getElementById("nav-pill").style.transform = `translateX(${newIndex * 100}%)`;
+
+  ballRotation += (newIndex - currentIndex) * 220;
+  const ball = document.getElementById("ball");
+  ball.style.transform = `rotate(${ballRotation}deg)`;
+  document.getElementById("ball-track").style.left = `calc(${newIndex * 33.333}% + ${100/6}% - 10px)`;
+
+  currentIndex = newIndex;
+
+  if (page === "home" && !window.__homeLoaded) { window.__homeLoaded = true; loadHome(); }
+  if (page === "search" && !window.__searchInit) { window.__searchInit = true; runSearch(""); }
+  if (page === "profile" && !window.__profileInit) { window.__profileInit = true; initProfile(); }
+}
+
+/* инициализация */
+document.getElementById("ball-track").style.left = `calc(0% + ${100/6}% - 10px)`;
+(async () => {
+  await initSupabase();
+  await loadHome();
+  window.__homeLoaded = true;
+})();
+</script>
+</body>
+</html>
