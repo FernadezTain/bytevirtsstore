@@ -151,7 +151,10 @@
   .admin-tabs{display:flex; gap:8px; margin-bottom:16px;}
   .admin-tab{border-radius:12px; padding:8px 16px; font-size:13px; font-weight:600; border:1px solid var(--border); background:var(--surface); color:var(--text-muted);}
   .admin-tab.active{border-color:transparent; color:#fff; background:linear-gradient(90deg,var(--accent),var(--accent-2));}
-  .admin-tab-panel{max-width:520px;}
+  .admin-tab-panel{max-width:520px; margin:0 auto;}
+#page-admin.active{display:flex; flex-direction:column; align-items:center;}
+#page-admin > div:first-child{width:100%; max-width:520px; margin:0 auto;}
+.admin-tabs{width:100%; max-width:520px; margin:0 auto;}
   select.auth-input{width:100%; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:12px 14px; color:var(--text); font-size:14px; outline:none; margin:0;}
   .admin-row{display:flex; align-items:center; justify-content:space-between; gap:10px; border:1px solid var(--border-soft); background:var(--surface); border-radius:14px; padding:12px 14px; margin-bottom:8px; font-size:13px;}
   .admin-row-actions{display:flex; gap:8px; flex-shrink:0;}
