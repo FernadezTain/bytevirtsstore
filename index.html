@@ -837,11 +837,6 @@ function goTo(page) {
 
   document.getElementById("nav-pill").style.transform = `translateX(${newIndex * 100}%)`;
 
-  ballRotation += (newIndex - currentIndex) * 220;
-  const ball = document.getElementById("ball");
-  if (ball) ball.style.transform = `rotate(${ballRotation}deg)`;
-  document.getElementById("ball-track").style.left = `calc(${newIndex * 33.333}% + ${100/6}% - 10px)`;
-
   currentIndex = newIndex;
 
   if (page === "home" && !window.__homeLoaded) { window.__homeLoaded = true; loadHome(); }
@@ -850,7 +845,6 @@ function goTo(page) {
 }
 
 /* инициализация */
-document.getElementById("ball-track").style.left = `calc(0% + ${100/6}% - 10px)`;
 (async () => {
   await initSupabase();
   await loadHome();
