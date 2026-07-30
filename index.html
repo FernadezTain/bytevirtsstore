@@ -177,7 +177,10 @@
     }
     .rail{margin-bottom:20px;}
     .search-box, .search-title{max-width:640px;}
-    .auth-form, .profile-card, .btn-secondary{max-width:420px;}
+    .auth-form, .profile-card{max-width:420px; margin-left:auto; margin-right:auto;}
+.btn-secondary{max-width:420px; margin-left:auto; margin-right:auto;}
+#page-profile{display:flex; flex-direction:column; align-items:center;}
+#profile-signed-in, #profile-signed-out{width:100%; max-width:420px;}
     nav.bottomnav{padding-bottom:24px;}
     .nav-wrap{max-width:440px;}
   }
@@ -525,7 +528,7 @@ function renderHomeGrid(accounts) {
   const grid = document.getElementById("home-grid");
   grid.innerHTML = accounts.length
     ? accounts.map(cardHTML).join("")
-    : `<div class="empty" style="grid-column:1/-1;">Пока нет активных объявлений. Добавьте запись в таблицу <code>accounts</code> в Supabase.</div>`;
+    : `<div class="empty" style="grid-column:1/-1;">Пока нет активных объявлений.</div>`;
 }
 
 /* =========================================================
