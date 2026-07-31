@@ -147,7 +147,7 @@
   .ball::after{content:""; position:absolute; inset:0; border-radius:50%; border-top:1px solid rgba(255,255,255,.4); opacity:.6;}
   .ball-shadow{width:12px; height:4px; margin:2px auto 0; border-radius:999px; background:rgba(0,0,0,.6); filter:blur(2px); opacity:.7;}
   .nav-island{position:relative; display:flex; align-items:center; justify-content:space-between; border-radius:28px; border:1px solid var(--border); background:rgba(23,23,27,.9); backdrop-filter:blur(20px); padding:8px; box-shadow:0 10px 40px rgba(0,0,0,.55);}
-  .nav-pill{position:absolute; top:8px; bottom:8px; left:8px; width:calc(33.333% - 5.33px); border-radius:20px; transition:transform .5s cubic-bezier(.22,1,.36,1); background:linear-gradient(135deg,var(--accent),var(--accent-2)); box-shadow:0 6px 18px rgba(255,61,31,.35);}
+  .nav-pill{position:absolute; top:8px; bottom:8px; left:8px; width:calc(25% - 4px); transition:transform .5s cubic-bezier(.22,1,.36,1); background:linear-gradient(135deg,var(--accent),var(--accent-2)); box-shadow:0 6px 18px rgba(255,61,31,.35);}
   .nav-btn{position:relative; z-index:1; display:flex; flex:1; flex-direction:column; align-items:center; justify-content:center; gap:4px; border-radius:20px; padding:10px 8px;}
   .nav-btn svg{color:var(--text-muted); transition:color .3s;}
   .nav-btn span{font-size:11px; font-weight:600; color:var(--text-muted); transition:color .3s;}
@@ -208,6 +208,39 @@
   .photo-thumb{position:relative; width:56px; height:56px; border-radius:10px; overflow:hidden; border:1px solid var(--border-soft); background:var(--bg-elevated); flex-shrink:0;}
   .photo-thumb img{width:100%; height:100%; object-fit:cover; display:block;}
   .photo-thumb.broken::after{content:"×"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--danger); font-size:18px; background:var(--surface-2);}
+
+  /* product detail modal */
+  .product-gallery{display:flex; gap:8px; overflow-x:auto; margin-bottom:16px; scrollbar-width:none;}
+  .product-gallery::-webkit-scrollbar{height:0;}
+  .product-gallery img{width:140px; height:100px; object-fit:cover; border-radius:14px; border:1px solid var(--border-soft); flex-shrink:0;}
+  .product-gallery-empty{width:100%; height:140px; border-radius:14px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--surface-2),var(--bg-elevated)); font-family:var(--font-display); font-size:22px; color:rgba(255,255,255,.12);}
+  .product-meta-row{display:flex; align-items:center; gap:8px; font-size:11px; color:var(--text-muted); margin-bottom:8px; flex-wrap:wrap;}
+  .product-meta-row .lvl{border-radius:6px; background:var(--accent-soft); color:var(--accent); font-family:var(--font-mono); padding:2px 6px;}
+  .product-detail-title{font-family:var(--font-display); font-size:24px; letter-spacing:.02em; color:#fff; margin:0 0 10px;}
+  .product-tags{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px;}
+  .product-tags span{border:1px solid var(--border-soft); border-radius:8px; padding:4px 9px; font-size:11.5px; color:var(--text-muted);}
+  .product-desc{font-size:13.5px; line-height:1.6; color:var(--text-muted); margin-bottom:18px; white-space:pre-line;}
+  .product-price-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .product-price{font-family:var(--font-mono); font-weight:700; font-size:24px; color:#fff;}
+  .btn-cart{width:100%; display:flex; align-items:center; justify-content:center; gap:8px;}
+  .btn-cart.in-cart{background:var(--surface-2); color:var(--success); border:1px solid rgba(53,214,143,.35); box-shadow:none;}
+
+  /* cart */
+  .cart-row{display:flex; align-items:center; gap:12px; border:1px solid var(--border-soft); background:var(--surface); border-radius:16px; padding:14px; margin-bottom:10px;}
+  .cart-thumb{width:48px; height:48px; border-radius:12px; flex-shrink:0; background:linear-gradient(135deg,var(--surface-2),var(--bg-elevated));}
+  .cart-info{flex:1; min-width:0;}
+  .cart-title{font-size:13.5px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px;}
+  .cart-meta{font-size:11.5px; color:var(--text-faint);}
+  .cart-right{display:flex; flex-direction:column; align-items:flex-end; gap:8px; flex-shrink:0;}
+  .cart-price{font-family:var(--font-mono); font-weight:700; font-size:14px; color:#fff;}
+  .cart-remove{font-size:11px; font-weight:600; color:var(--danger); border:1px solid rgba(255,92,92,.3); border-radius:8px; padding:4px 9px;}
+  .cart-summary{border:1px solid var(--border); background:var(--surface); border-radius:18px; padding:16px; margin-top:6px;}
+  .cart-summary-row{display:flex; align-items:center; justify-content:space-between; font-size:14px; color:var(--text-muted); margin-bottom:12px;}
+  .cart-summary-row b{color:#fff; font-family:var(--font-mono); font-size:17px;}
+
+  /* nav badge */
+  .nav-badge{position:absolute; top:2px; right:14px; min-width:16px; height:16px; padding:0 4px; border-radius:999px; background:var(--accent); color:#fff; font-size:9.5px; font-weight:700; display:none; align-items:center; justify-content:center; z-index:2; box-shadow:0 2px 6px rgba(255,61,31,.5);}
+  .nav-badge.show{display:flex;}
 
   .purchase-row{display:flex; align-items:center; gap:12px; border:1px solid var(--border-soft); background:var(--surface); border-radius:16px; padding:14px; margin-bottom:10px;}
   .purchase-thumb{width:44px; height:44px; border-radius:12px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:16px; color:rgba(255,255,255,.8); background:linear-gradient(135deg,var(--surface-2),var(--bg-elevated));}
@@ -580,6 +613,13 @@
     </div>
   </section>
 
+  <!-- ================= КОРЗИНА ================= -->
+  <section id="page-cart" class="page">
+    <h1 class="search-title">КОРЗИНА</h1>
+    <div id="cart-list"></div>
+    <div id="cart-summary-wrap"></div>
+  </section>
+
 </main>
 <div class="modal-overlay" id="topup-overlay" onclick="if(event.target===this) closeTopup()">
   <div class="modal-sheet">
@@ -657,6 +697,18 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="product-overlay" onclick="if(event.target===this) closeProduct()">
+  <div class="modal-sheet" style="max-width:480px;">
+    <div class="modal-head">
+      <h2>Товар</h2>
+      <button class="modal-close" onclick="closeProduct()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="product-modal-body"></div>
+  </div>
+</div>
+
 <div class="cookie-banner" id="cookie-banner">
   <p>Мы используем файлы cookie и локальное хранилище браузера для авторизации и корректной работы сайта.</p>
   <button onclick="acceptCookies()">Понятно</button>
@@ -673,6 +725,11 @@
       <button class="nav-btn" data-page="search" onclick="goTo('search')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
         <span>Поиск</span>
+      </button>
+      <button class="nav-btn" data-page="cart" onclick="goTo('cart')">
+        <span class="nav-badge" id="cart-badge">0</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span>Корзина</span>
       </button>
       <button class="nav-btn" data-page="profile" onclick="goTo('profile')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
@@ -763,12 +820,14 @@ async function getServers() {
    ========================================================= */
 const fmt = n => new Intl.NumberFormat("ru-RU").format(n);
 const fmtCompact = n => new Intl.NumberFormat("ru-RU", { notation:"compact" }).format(n);
+const productRegistry = {};
 
 function cardHTML(a) {
+  productRegistry[a.id] = a;
   const reserved = a.status === "reserved";
   const items = (a.warehouse_items || []).slice(0,2).map(i => `<span>${i}</span>`).join("");
   return `
-  <article class="card">
+  <article class="card" onclick="openProduct('${a.id}')">
     <div class="card-media">
       <span>${a.server}</span>
       <div class="pill-views">
@@ -798,6 +857,116 @@ function skeletons(n) {
   return Array.from({length:n}).map(() => `<div class="skeleton"></div>`).join("");
 }
 
+/* =========================================================
+   ТОВАР — детальная карточка + корзина
+   ========================================================= */
+function openProduct(id) {
+  const a = productRegistry[id];
+  if (!a) return;
+  renderProductModal(a);
+  document.getElementById("product-overlay").classList.add("active");
+}
+function closeProduct() {
+  document.getElementById("product-overlay").classList.remove("active");
+}
+
+function renderProductModal(a) {
+  const photos = a.photos && a.photos.length ? a.photos : [];
+  const gallery = photos.length
+    ? `<div class="product-gallery">${photos.map(p => `<img src="${p}" onerror="this.remove();" />`).join("")}</div>`
+    : `<div class="product-gallery-empty">${a.server}</div>`;
+  const tags = (a.warehouse_items || []).map(i => `<span>${i}</span>`).join("");
+  const desc = a.description && a.description.trim() ? a.description : "Продавец пока не добавил подробное описание этого товара.";
+  const inCart = isInCart(a.id);
+
+  document.getElementById("product-modal-body").innerHTML = `
+    ${gallery}
+    <div class="product-meta-row">
+      <span class="lvl">LVL ${a.level}</span>
+      <span>${a.server}</span>
+      ${a.is_verified ? `<span style="color:var(--success);">· Проверенный продавец</span>` : ""}
+    </div>
+    <h1 class="product-detail-title">${a.title}</h1>
+    <div class="product-tags">${tags}</div>
+    <p class="product-desc">${desc}</p>
+    <div class="product-price-row">
+      <div class="product-price">${fmt(a.price)} ₽</div>
+    </div>
+    <button type="button" class="btn-primary btn-cart ${inCart ? "in-cart" : ""}" id="product-cart-btn" onclick="toggleCart('${a.id}')">
+      ${inCart
+        ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> В корзине`
+        : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> Добавить в корзину`}
+    </button>
+  `;
+}
+
+/* --- Корзина --- */
+function getCart() {
+  try { return JSON.parse(localStorage.getItem("cart") || "{}"); } catch (e) { return {}; }
+}
+function saveCart(cart) {
+  try { localStorage.setItem("cart", JSON.stringify(cart)); } catch (e) {}
+  updateCartBadge();
+}
+function isInCart(id) {
+  return !!getCart()[id];
+}
+function toggleCart(id) {
+  const a = productRegistry[id];
+  if (!a) return;
+  const cart = getCart();
+  if (cart[id]) delete cart[id];
+  else cart[id] = { id: a.id, title: a.title, server: a.server, price: a.price };
+  saveCart(cart);
+  renderProductModal(a);
+  if (document.getElementById("page-cart").classList.contains("active")) renderCartPage();
+}
+function removeFromCart(id) {
+  const cart = getCart();
+  delete cart[id];
+  saveCart(cart);
+  renderCartPage();
+}
+function updateCartBadge() {
+  const count = Object.keys(getCart()).length;
+  const badge = document.getElementById("cart-badge");
+  if (!badge) return;
+  badge.textContent = count > 9 ? "9+" : String(count);
+  badge.classList.toggle("show", count > 0);
+}
+function cartRowHTML(item) {
+  return `
+  <div class="cart-row">
+    <div class="cart-thumb"></div>
+    <div class="cart-info">
+      <div class="cart-title">${item.title}</div>
+      <div class="cart-meta">${item.server}</div>
+    </div>
+    <div class="cart-right">
+      <div class="cart-price">${fmt(item.price)} ₽</div>
+      <button class="cart-remove" onclick="removeFromCart('${item.id}')">Убрать</button>
+    </div>
+  </div>`;
+}
+function renderCartPage() {
+  const cart = getCart();
+  const items = Object.values(cart);
+  const listEl = document.getElementById("cart-list");
+  const summaryEl = document.getElementById("cart-summary-wrap");
+  if (!items.length) {
+    listEl.innerHTML = `<div class="empty">Ваша корзина пуста.</div>`;
+    summaryEl.innerHTML = "";
+    return;
+  }
+  listEl.innerHTML = items.map(cartRowHTML).join("");
+  const total = items.reduce((sum, i) => sum + (i.price || 0), 0);
+  summaryEl.innerHTML = `
+    <div class="cart-summary">
+      <div class="cart-summary-row"><span>Товаров в корзине</span><b>${items.length}</b></div>
+      <div class="cart-summary-row"><span>Итого</span><b>${fmt(total)} ₽</b></div>
+      <button type="button" class="btn-primary" style="width:100%;" onclick="openTopup()">Перейти к оплате</button>
+    </div>`;
+}
 /* =========================================================
    4. СТРАНИЦА «ГЛАВНАЯ»
    ========================================================= */
@@ -1237,7 +1406,7 @@ async function handleSignOut() {
 /* =========================================================
    7. НИЖНЯЯ НАВИГАЦИЯ + КАТАЮЩИЙСЯ ШАРИК
    ========================================================= */
-const pageOrder = ["home", "search", "profile"];
+const pageOrder = ["home", "search", "cart", "profile"];
 let currentIndex = 0;
 let ballRotation = 0;
 
@@ -1259,6 +1428,7 @@ function goTo(page) {
   if (page === "home" && !window.__homeLoaded) { window.__homeLoaded = true; loadHome(); }
   if (page === "search" && !window.__searchInit) { window.__searchInit = true; runSearch(""); }
   if (page === "profile" && !window.__profileInit) { window.__profileInit = true; initProfile(); }
+  if (page === "cart") { renderCartPage(); }
 }
 
 /* cookie banner */
@@ -1278,6 +1448,7 @@ function initCookieBanner() {
   await loadHome();
   window.__homeLoaded = true;
   initCookieBanner();
+  updateCartBadge();
 })();
 </script>
 </body>
