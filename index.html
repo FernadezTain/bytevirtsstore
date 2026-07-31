@@ -12,6 +12,7 @@
 
 <!-- Supabase client (only used if you fill in CONFIG below) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
   :root{
@@ -650,21 +651,37 @@
       </div>
       <svg class="method-select-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
     </button>
-    <div class="auth-input">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-      <input id="topup-amount" type="number" min="15" placeholder="Сумма пополнения" />
+    <div id="topup-generic-block">
+      <div class="auth-input">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+        <input id="topup-amount" type="number" min="15" placeholder="Сумма пополнения" />
+      </div>
+      <p class="amount-hint">Минимальная сумма пополнения - 15 ₽</p>
+
+      <button type="button" class="btn-primary" style="width:100%; margin-top:16px;" disabled>Оплатить</button>
+
+      <div class="topup-notice">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
+        Возможность пополнения будет позже
+      </div>
     </div>
-    <p class="amount-hint">Минимальная сумма пополнения - 15 ₽</p>
 
-    <button type="button" class="btn-primary" style="width:100%; margin-top:16px;" disabled>Оплатить</button>
+    <div id="topup-stars-block" style="display:none;">
+      <div class="auth-input">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <input id="stars-amount" type="number" min="1" step="1" value="1" placeholder="Количество Stars" oninput="updateStarsPreview()" />
+      </div>
+      <p class="amount-hint">Минимум 1 Star · 1 Star = 2 ₽ · к оплате: <span id="stars-rub-preview">2 ₽</span></p>
 
-    <div class="topup-notice">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
-      Возможность пополнения будет позже
+      <button type="button" class="btn-primary" style="width:100%; margin-top:16px;" id="stars-pay-btn" onclick="payWithStars()">Оплатить Stars</button>
+
+      <div class="topup-notice">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
+        Оплата пройдёт во всплывающем окне Telegram Stars
+      </div>
     </div>
   </div>
 </div>
-
 <div class="modal-overlay" id="checkout-overlay" onclick="if(event.target===this) closeCheckout()">
   <div class="modal-sheet">
     <div class="modal-head">
@@ -693,6 +710,19 @@
       <div class="method-info">
         <div class="method-name">ЮMoney</div>
         <div class="method-sub">Перевод с карты или кошелька</div>
+      </div>
+      <div class="method-check" style="display:none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+    </div>
+
+    <div class="method-option" id="method-stars" onclick="pickMethod('stars', this)">
+      <div class="method-icon">
+        <svg width="60%" height="60%" viewBox="0 0 24 24" fill="#ffb020"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      </div>
+      <div class="method-info">
+        <div class="method-name">Telegram Stars</div>
+        <div class="method-sub">1 Star = 2 ₽ · оплата в Telegram</div>
       </div>
       <div class="method-check" style="display:none;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>
@@ -1159,8 +1189,72 @@ const paymentMethods = {
   yoomoney: {
     name: "ЮMoney",
     iconHTML: `<img src="assets/yoomoney-logo.png" alt="ЮMoney" style="width:100%; height:100%; object-fit:cover;" />`
+  },
+  stars: {
+    name: "Telegram Stars",
+    iconHTML: `<svg width="60%" height="60%" viewBox="0 0 24 24" fill="#ffb020"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`
   }
 };
+
+function updateStarsPreview() {
+  const input = document.getElementById("stars-amount");
+  let stars = parseInt(input.value, 10);
+  if (!stars || stars < 1) stars = 1;
+  document.getElementById("stars-rub-preview").textContent = `${fmt(stars * 2)} ₽`;
+}
+
+async function refreshBalanceFromServer() {
+  if (!supabaseClient) return;
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) return;
+  const { data: profile } = await supabaseClient.from("profiles").select("balance").eq("id", user.id).single();
+  const el = document.getElementById("profile-balance");
+  if (el) el.textContent = `${fmt(profile?.balance ?? 0)} ₽`;
+}
+
+async function payWithStars() {
+  const input = document.getElementById("stars-amount");
+  let stars = parseInt(input.value, 10);
+  if (!stars || stars < 1) stars = 1;
+  input.value = stars;
+  updateStarsPreview();
+
+  const btn = document.getElementById("stars-pay-btn");
+  btn.disabled = true;
+  btn.textContent = "Создание счёта...";
+  try {
+    if (!supabaseClient) throw new Error("Нет подключения к серверу");
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) throw new Error("Войдите в аккаунт, чтобы пополнить баланс");
+
+    const res = await fetch("/api/telegram/create-invoice", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
+      body: JSON.stringify({ stars })
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.error || "Не удалось создать счёт");
+
+    if (window.Telegram?.WebApp?.openInvoice) {
+      window.Telegram.WebApp.openInvoice(json.invoice_link, (status) => {
+        btn.disabled = false;
+        btn.textContent = "Оплатить Stars";
+        if (status === "paid") {
+          closeTopup();
+          setTimeout(refreshBalanceFromServer, 1500);
+        }
+      });
+    } else {
+      alert("Оплата Stars доступна только внутри Telegram Mini App.");
+      btn.disabled = false;
+      btn.textContent = "Оплатить Stars";
+    }
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = "Оплатить Stars";
+    alert(e.message);
+  }
+}
 
 /* =========================================================
    ПОКУПКИ
@@ -1476,6 +1570,12 @@ function confirmMethod() {
   valueEl.textContent = m.name;
   valueEl.classList.add("chosen");
   document.getElementById("method-select-btn").classList.add("has-selection");
+
+  const isStars = selectedMethod === "stars";
+  document.getElementById("topup-generic-block").style.display = isStars ? "none" : "block";
+  document.getElementById("topup-stars-block").style.display = isStars ? "block" : "none";
+  if (isStars) updateStarsPreview();
+
   closeMethodPicker();
 }
 
@@ -1767,6 +1867,10 @@ function initCookieBanner() {
 
 /* инициализация */
 (async () => {
+  if (window.Telegram?.WebApp) {
+    window.Telegram.WebApp.ready();
+    window.Telegram.WebApp.expand();
+  }
   await initSupabase();
   await loadHome();
   window.__homeLoaded = true;
