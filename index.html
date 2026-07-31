@@ -719,14 +719,19 @@
   </div>
 </div>
 
-<section id="page-purchases" class="page">
-    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
-      <button class="btn-secondary" style="width:auto; padding:10px 14px;" onclick="closePurchases()">← Назад</button>
-      <h1 class="profile-title" style="margin:0;">МОИ ПОКУПКИ</h1>
+<div class="modal-overlay" id="purchase-detail-overlay" onclick="if(event.target===this) closePurchaseDetail()">
+  <div class="modal-sheet" style="max-width:480px;">
+    <div class="modal-head">
+      <h2>Покупка</h2>
+      <button class="modal-close" onclick="closePurchaseDetail()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
     </div>
+    <div id="purchase-detail-body"></div>
+  </div>
+</div>
 
-    <div id="purchases-list"></div>
-  </section>
+<div class="modal-overlay" id="product-overlay" onclick="if(event.target===this) closeProduct()">
   <div class="modal-sheet" style="max-width:480px;">
     <div class="modal-head">
       <h2>Товар</h2>
@@ -737,7 +742,6 @@
     <div id="product-modal-body"></div>
   </div>
 </div>
-
 <div class="cookie-banner" id="cookie-banner">
   <p>Мы используем файлы cookie и локальное хранилище браузера для авторизации и корректной работы сайта.</p>
   <button onclick="acceptCookies()">Понятно</button>
@@ -814,7 +818,8 @@ const mockAccounts = [
 
 async function getAccounts({ query, server } = {}) {
   if (!supabaseClient) {
-    let results = mockAccounts.filter(a => a.status === "active" || a.status === "reserved");
+    const sold = getSoldLocal();
+    let results = mockAccounts.filter(a => (a.status === "active" || a.status === "reserved") && !sold[a.id]);
     if (query) { const q = query.toLowerCase(); results = results.filter(a => a.title.toLowerCase().includes(q)); }
     if (server) results = results.filter(a => a.server === server);
     return results;
@@ -929,6 +934,55 @@ function renderProductModal(a) {
   `;
 }
 
+/* --- Продажи / резервирование товара --- */
+function getSoldLocal() {
+  try { return JSON.parse(localStorage.getItem("soldAccounts") || "{}"); } catch (e) { return {}; }
+}
+async function reserveAccount(id) {
+  if (supabaseClient) {
+    try {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      const { data, error } = await supabaseClient
+        .from("accounts")
+        .update({ status: "sold", buyer_id: user?.id || null })
+        .eq("id", id)
+        .eq("status", "active")
+        .select();
+      if (error) { console.error(error); return false; }
+      return !!(data && data.length);
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  } else {
+    const sold = getSoldLocal();
+    if (sold[id]) return false;
+    sold[id] = true;
+    try { localStorage.setItem("soldAccounts", JSON.stringify(sold)); } catch (e) {}
+    return true;
+  }
+}
+async function pruneSoldFromCart() {
+  const cart = getCart();
+  const ids = Object.keys(cart);
+  if (!ids.length) return;
+  if (!supabaseClient) {
+    const sold = getSoldLocal();
+    let changed = false;
+    ids.forEach(id => { if (sold[id]) { delete cart[id]; changed = true; } });
+    if (changed) saveCart(cart);
+    return;
+  }
+  try {
+    const { data, error } = await supabaseClient.from("accounts").select("id,status").in("id", ids);
+    if (error) { console.error(error); return; }
+    const stillActive = new Set((data || []).filter(a => a.status === "active" || a.status === "reserved").map(a => a.id));
+    let changed = false;
+    ids.forEach(id => { if (!stillActive.has(id)) { delete cart[id]; changed = true; } });
+    if (changed) saveCart(cart);
+  } catch (e) { console.error(e); }
+}
+
 /* --- Корзина --- */
 function getCart() {
   try { return JSON.parse(localStorage.getItem("cart") || "{}"); } catch (e) { return {}; }
@@ -977,7 +1031,8 @@ function cartRowHTML(item) {
     </div>
   </div>`;
 }
-function renderCartPage() {
+async function renderCartPage() {
+  await pruneSoldFromCart();
   const cart = getCart();
   const items = Object.values(cart);
   const listEl = document.getElementById("cart-list");
@@ -1267,7 +1322,7 @@ function openCheckout() {
 function closeCheckout() {
   document.getElementById("checkout-overlay").classList.remove("active");
 }
-function payFromBalance(total) {
+async function payFromBalance(total) {
   const cart = getCart();
   const items = Object.values(cart);
   if (!items.length) return;
@@ -1279,30 +1334,65 @@ function payFromBalance(total) {
     </div>
   `;
 
-  const delay = 1500 + Math.random() * 2000;
-  setTimeout(() => {
-    addPurchaseRecords(items);
+  const delay = 1200 + Math.random() * 1800;
+  await new Promise(res => setTimeout(res, delay));
 
-    const balanceEl = document.getElementById("profile-balance");
-    if (balanceEl) {
-      const current = getUserBalance();
-      balanceEl.textContent = `${fmt(Math.max(current - total, 0))} ₽`;
-    }
+  // Баланс уже проверен и одобрен (openCheckout). Теперь атомарно бронируем каждый товар:
+  const purchased = [];
+  const unavailable = [];
+  for (const item of items) {
+    const ok = await reserveAccount(item.id);
+    if (ok) purchased.push(item); else unavailable.push(item);
+  }
 
-    saveCart({});
-    if (document.getElementById("page-cart").classList.contains("active")) renderCartPage();
+  // Убираем из корзины всё, что оказалось недоступно (куплено/удалено кем-то ещё)
+  if (unavailable.length) {
+    const cartNow = getCart();
+    unavailable.forEach(item => delete cartNow[item.id]);
+    saveCart(cartNow);
+  }
 
+  if (!purchased.length) {
     document.getElementById("checkout-body").innerHTML = `
       <div style="display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px; padding:8px 0 4px;">
-        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--success);"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-        <h2 style="font-family:var(--font-display); font-size:22px; letter-spacing:.02em; color:#fff; margin:6px 0 0;">Товар оформлен!</h2>
-        <p style="font-size:13.5px; color:var(--text-muted); margin:0 0 14px; max-width:28ch;">Содержимое товаров проверьте в разделе Покупок профиля</p>
-        <button type="button" class="btn-primary" style="width:100%;" onclick="goToPurchasesFromCheckout()">Перейти в покупки</button>
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--danger);"><circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
+        <h2 style="font-family:var(--font-display); font-size:22px; letter-spacing:.02em; color:#fff; margin:6px 0 0;">Ошибка оформления.</h2>
+        <p style="font-size:13.5px; color:var(--text-muted); margin:0 0 14px; max-width:28ch;">Товара нет в наличии</p>
+        <button type="button" class="btn-secondary" style="width:100%;" onclick="closeCheckout()">Закрыть</button>
       </div>
     `;
-  }, delay);
-}
+    if (document.getElementById("page-cart").classList.contains("active")) renderCartPage();
+    return;
+  }
 
+  addPurchaseRecords(purchased);
+  const purchasedTotal = purchased.reduce((s, i) => s + (i.price || 0), 0);
+
+  const balanceEl = document.getElementById("profile-balance");
+  if (balanceEl) {
+    const current = getUserBalance();
+    balanceEl.textContent = `${fmt(Math.max(current - purchasedTotal, 0))} ₽`;
+  }
+
+  const cartAfter = getCart();
+  purchased.forEach(item => delete cartAfter[item.id]);
+  saveCart(cartAfter);
+  if (document.getElementById("page-cart").classList.contains("active")) renderCartPage();
+
+  const failNote = unavailable.length
+    ? `<p style="font-size:12.5px; color:var(--danger); margin:0 0 14px;">Товар(ы) «${unavailable.map(i => i.title).join(", ")}» уже куплены и удалены из корзины.</p>`
+    : "";
+
+  document.getElementById("checkout-body").innerHTML = `
+    <div style="display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px; padding:8px 0 4px;">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--success);"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+      <h2 style="font-family:var(--font-display); font-size:22px; letter-spacing:.02em; color:#fff; margin:6px 0 0;">Товар оформлен!</h2>
+      <p style="font-size:13.5px; color:var(--text-muted); margin:0 0 14px; max-width:28ch;">Содержимое товаров проверьте в разделе Покупок профиля</p>
+      ${failNote}
+      <button type="button" class="btn-primary" style="width:100%;" onclick="goToPurchasesFromCheckout()">Перейти в покупки</button>
+    </div>
+  `;
+}
 function goToPurchasesFromCheckout() {
   closeCheckout();
   goTo("profile");
