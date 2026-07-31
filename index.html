@@ -194,6 +194,12 @@
 
   .admin-list-title{font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-faint); margin:0 0 10px;}
 
+  .action-row{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;}
+  .action-row .btn-primary, .action-row .btn-secondary{margin-bottom:0;}
+  .support-notice{display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; padding:20px 8px 8px;}
+  .support-notice svg{color:var(--text-faint);}
+  .support-notice p{font-size:14px; color:var(--text-muted); margin:0;}
+
   /* topup modal */
   .modal-overlay{
     position:fixed; inset:0; z-index:100; display:none; align-items:center; justify-content:center;
@@ -430,10 +436,16 @@
           </div>
         </div>
       </div>
-      <button class="btn-primary" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px;" onclick="openTopup()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h2"/></svg>
-        Пополнить баланс
-      </button>
+      <div class="action-row">
+        <button class="btn-primary" style="display:flex; align-items:center; justify-content:center; gap:8px;" onclick="openTopup()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h2"/></svg>
+          Пополнить
+        </button>
+        <button class="btn-secondary" style="margin-bottom:0;" onclick="openSupport()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a2.9 2.9 0 0 1 5.7.9c0 2-2.9 2-2.9 4"/><path d="M12 17h.01"/></svg>
+          Поддержка
+        </button>
+      </div>
       <button class="btn-secondary" id="admin-panel-btn" style="display:none; margin-bottom:10px;" onclick="openAdmin()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         Панель управления
@@ -544,6 +556,22 @@
     </div>
 
     <button type="button" class="btn-primary" style="width:100%; margin-top:4px;" id="confirm-method-btn" disabled onclick="confirmMethod()">Выбрать способ</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="support-overlay" onclick="if(event.target===this) closeSupport()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h2>Поддержка</h2>
+      <button class="modal-close" onclick="closeSupport()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="support-notice">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.1-3.1a4 4 0 0 1-5.4 5.4L9 18a2.12 2.12 0 0 1-3-3l6.4-6.4a4 4 0 0 1 5.4-5.4l-3.1 3.1Z"/></svg>
+      <p>В разработке..</p>
+    </div>
+    <button type="button" class="btn-secondary" style="margin-top:16px;" onclick="closeSupport()">Закрыть</button>
   </div>
 </div>
 
@@ -797,6 +825,13 @@ function openTopup() {
 }
 function closeTopup() {
   document.getElementById("topup-overlay").classList.remove("active");
+}
+
+function openSupport() {
+  document.getElementById("support-overlay").classList.add("active");
+}
+function closeSupport() {
+  document.getElementById("support-overlay").classList.remove("active");
 }
 
 function openMethodPicker() {
