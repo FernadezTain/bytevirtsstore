@@ -941,10 +941,9 @@ function getSoldLocal() {
 async function reserveAccount(id) {
   if (supabaseClient) {
     try {
-      const { data: { user } } = await supabaseClient.auth.getUser();
       const { data, error } = await supabaseClient
         .from("accounts")
-        .update({ status: "sold", buyer_id: user?.id || null })
+        .update({ status: "sold" })
         .eq("id", id)
         .eq("status", "active")
         .select();
@@ -1340,31 +1339,39 @@ async function payFromBalance(total) {
   // Баланс уже проверен и одобрен (openCheckout). Теперь атомарно бронируем каждый товар:
   const purchased = [];
   const unavailable = [];
+  let systemErrorMsg = null;
   for (const item of items) {
-    const ok = await reserveAccount(item.id);
-    if (ok) purchased.push(item); else unavailable.push(item);
+    const res = await reserveAccount(item.id);
+    if (res.ok) {
+      purchased.push(item);
+    } else {
+      unavailable.push(item);
+      if (res.systemError) systemErrorMsg = res.message || "неизвестная ошибка";
+    }
   }
-
-  // Убираем из корзины всё, что оказалось недоступно (куплено/удалено кем-то ещё)
-  if (unavailable.length) {
+  // Убираем из корзины только реально распроданные позиции (не системные ошибки)
+  const trulyUnavailable = unavailable.filter(() => !systemErrorMsg);
+  if (trulyUnavailable.length) {
     const cartNow = getCart();
-    unavailable.forEach(item => delete cartNow[item.id]);
+    trulyUnavailable.forEach(item => delete cartNow[item.id]);
     saveCart(cartNow);
   }
 
   if (!purchased.length) {
+    const reasonText = systemErrorMsg
+      ? `Техническая ошибка сервера. Попробуйте позже. (${systemErrorMsg})`
+      : "Товара нет в наличии";
     document.getElementById("checkout-body").innerHTML = `
       <div style="display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px; padding:8px 0 4px;">
         <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--danger);"><circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
         <h2 style="font-family:var(--font-display); font-size:22px; letter-spacing:.02em; color:#fff; margin:6px 0 0;">Ошибка оформления.</h2>
-        <p style="font-size:13.5px; color:var(--text-muted); margin:0 0 14px; max-width:28ch;">Товара нет в наличии</p>
+        <p style="font-size:13.5px; color:var(--text-muted); margin:0 0 14px; max-width:28ch;">${reasonText}</p>
         <button type="button" class="btn-secondary" style="width:100%;" onclick="closeCheckout()">Закрыть</button>
       </div>
     `;
-    if (document.getElementById("page-cart").classList.contains("active")) renderCartPage();
+    if (!systemErrorMsg && document.getElementById("page-cart").classList.contains("active")) renderCartPage();
     return;
   }
-
   addPurchaseRecords(purchased);
   const purchasedTotal = purchased.reduce((s, i) => s + (i.price || 0), 0);
 
