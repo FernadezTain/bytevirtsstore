@@ -124,13 +124,14 @@
   .btn-secondary:hover{border-color:rgba(255,61,31,.4); color:var(--text);}
   .notice-ok{border:1px solid rgba(53,214,143,.3); background:rgba(53,214,143,.1); border-radius:16px; padding:14px; font-size:13px; color:var(--success);}
   .error-text{font-size:12px; color:var(--danger); margin:0;}
-  .profile-card{border:1px solid var(--border); background:var(--surface); border-radius:24px; padding:20px; margin-bottom:20px;}
+  .profile-card{border:1px solid var(--border); background:var(--surface); border-radius:24px; padding:20px; margin-bottom:20px; user-select:none; -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none;}
   .profile-head{display:flex; align-items:center; gap:12px; margin-bottom:16px;}
   .avatar{width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:24px; color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent-2));}
   .profile-name{font-family:var(--font-display); font-size:20px; letter-spacing:.02em; color:#fff; margin:0;}
   .profile-rating{display:flex; align-items:center; gap:4px; font-size:12px; color:var(--text-muted);}
   .profile-rating svg{color:var(--spark); fill:var(--spark);}
   .stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .stat-grid.single-col{grid-template-columns:1fr;}
   .stat-box{border:1px solid var(--border-soft); background:var(--bg-elevated); border-radius:16px; padding:14px;}
   .stat-label{display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-muted); margin-bottom:6px;}
   .stat-value{font-family:var(--font-mono); font-weight:700; font-size:17px; color:#fff;}
@@ -351,7 +352,7 @@
             <div class="stat-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Баланс</div>
             <div class="stat-value" id="profile-balance">0 ₽</div>
           </div>
-          <div class="stat-box">
+          <div class="stat-box" id="profile-status-box">
             <div class="stat-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>Статус</div>
             <div class="stat-value text" id="profile-status">Пользователь</div>
           </div>
@@ -641,6 +642,8 @@ async function showSignedIn(user) {
   const isAdmin = profile?.role === "admin";
   document.getElementById("profile-status").textContent = isAdmin ? "Администратор" : "Пользователь";
   document.getElementById("admin-panel-btn").style.display = isAdmin ? "flex" : "none";
+  document.getElementById("profile-status-box").style.display = isAdmin ? "block" : "none";
+  document.querySelector(".stat-grid").classList.toggle("single-col", !isAdmin);
 }
 
 function openAdmin() {
