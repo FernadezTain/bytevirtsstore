@@ -422,17 +422,24 @@
 </head>
 <body>
 
-<div id="not-telegram-overlay" style="display:none; position:fixed; inset:0; z-index:99999; background:#0a0a0c; color:#f4f2ee; display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:32px; font-family:'Manrope', system-ui, sans-serif;">
-  <div style="width:64px; height:64px; border-radius:18px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#ff3d1f,#ff8a3d); margin-bottom:20px;">
-    <span style="font-family:'Bebas Neue', sans-serif; font-size:28px; color:#fff;">B</span>
+<div class="modal-overlay" id="not-telegram-overlay" onclick="if(event.target===this) closeNotTelegramNotice()">
+  <div class="modal-sheet" style="text-align:center;">
+    <div class="modal-head" style="justify-content:center; position:relative;">
+      <h2>Нужен Telegram</h2>
+      <button class="modal-close" style="position:absolute; right:0;" onclick="closeNotTelegramNotice()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div style="width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#ffc94a,#ff8a1f); margin:4px auto 16px;">
+      <img src="assets/telegram-stars-logo.png" alt="" style="width:60%; height:60%; object-fit:contain;" />
+    </div>
+    <p style="font-size:14px; color:var(--text-muted); max-width:280px; margin:0 auto 20px; line-height:1.5;">
+      Оплата Telegram Stars доступна только внутри мини-приложения в Telegram. Откройте ByteVirts через бота, чтобы пополнить баланс.
+    </p>
+    <a href="https://t.me/ByteVirts_bot" class="btn-primary" style="width:100%; display:block; text-align:center; text-decoration:none; box-sizing:border-box;">
+      Открыть @ByteVirts_bot
+    </a>
   </div>
-  <h1 style="font-family:'Bebas Neue', sans-serif; font-size:28px; letter-spacing:.02em; margin:0 0 10px;">Откройте ByteVirts в Telegram</h1>
-  <p style="font-size:14.5px; color:#9a9aa1; max-width:320px; margin:0 0 24px; line-height:1.5;">
-    Этот сайт работает как приложение внутри Telegram. Перейдите в бота, чтобы пользоваться каталогом, покупками и пополнением баланса.
-  </p>
-  <a href="https://t.me/ByteVirts_bot" style="display:inline-flex; align-items:center; gap:8px; padding:14px 28px; border-radius:14px; background:linear-gradient(135deg,#ff3d1f,#ff8a3d); color:#fff; font-weight:700; font-size:15px; text-decoration:none;">
-    Открыть @ByteVirts_bot
-  </a>
 </div>
 
 <header class="topbar">
@@ -1229,7 +1236,18 @@ async function refreshBalanceFromServer() {
   if (el) el.textContent = `${fmt(profile?.balance ?? 0)} ₽`;
 }
 
+function closeNotTelegramNotice() {
+  document.getElementById("not-telegram-overlay").classList.remove("active");
+}
+
 async function payWithStars() {
+  const tg = window.Telegram?.WebApp;
+  const isInsideTelegram = !!(tg && tg.initData && tg.initData.length > 0);
+  if (!isInsideTelegram) {
+    document.getElementById("not-telegram-overlay").classList.add("active");
+    return;
+  }
+
   const input = document.getElementById("stars-amount");
   let stars = parseInt(input.value, 10);
   if (!stars || stars < 1) stars = 1;
@@ -1885,15 +1903,10 @@ function initCookieBanner() {
 /* инициализация */
 (async () => {
   const tg = window.Telegram?.WebApp;
-  const isInsideTelegram = !!(tg && tg.initData && tg.initData.length > 0);
-
-  if (!isInsideTelegram) {
-    document.getElementById("not-telegram-overlay").style.display = "flex";
-    return;
+  if (tg) {
+    tg.ready();
+    tg.expand();
   }
-
-  tg.ready();
-  tg.expand();
   await initSupabase();
   await loadHome();
   window.__homeLoaded = true;
