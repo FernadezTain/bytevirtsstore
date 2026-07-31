@@ -259,6 +259,47 @@
   .status-badge.active{color:var(--spark); background:rgba(255,176,32,.14);}
   .status-badge.completed{color:var(--success); background:rgba(53,214,143,.14);}
 
+  /* transactions */
+  .transaction-row{display:flex; align-items:center; gap:12px; border:1px solid var(--border-soft); background:var(--surface); border-radius:16px; padding:14px; margin-bottom:10px;}
+  .transaction-icon{width:38px; height:38px; border-radius:12px; flex-shrink:0; display:flex; align-items:center; justify-content:center;}
+  .transaction-icon.topup{background:rgba(53,214,143,.14); color:var(--success);}
+  .transaction-icon.purchase{background:rgba(255,61,31,.14); color:var(--accent);}
+  .transaction-info{flex:1; min-width:0;}
+  .transaction-title{font-size:13.5px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px;}
+  .transaction-meta{font-size:11.5px; color:var(--text-faint);}
+  .transaction-amount{font-family:var(--font-mono); font-weight:700; font-size:14px; flex-shrink:0; white-space:nowrap;}
+  .transaction-amount.positive{color:var(--success);}
+  .transaction-amount.negative{color:var(--danger);}
+
+  /* balance count-up flash */
+  .balance-flash{animation:balancePulse .7s ease;}
+  @keyframes balancePulse{0%{color:var(--success); text-shadow:0 0 14px rgba(53,214,143,.65);} 100%{color:#fff; text-shadow:none;}}
+
+  /* payment success overlay: зелёная волна + баннер */
+  .payment-success-overlay{position:fixed; inset:0; z-index:300; display:flex; align-items:center; justify-content:center; padding:20px; opacity:0; pointer-events:none; transition:opacity .25s ease;}
+  .payment-success-overlay.active{opacity:1; pointer-events:auto;}
+  .payment-success-overlay .success-backdrop{position:absolute; inset:0; background:rgba(4,10,8,.62); backdrop-filter:blur(4px);}
+  .success-wave{position:absolute; inset:0; overflow:hidden; pointer-events:none;}
+  .success-wave .beam{position:absolute; bottom:-10%; width:160px; height:120%; background:linear-gradient(to top, rgba(53,214,143,.65), rgba(53,214,143,0) 72%); filter:blur(20px); transform:translateY(120%); opacity:0;}
+  .success-wave .beam.left{left:-50px;}
+  .success-wave .beam.right{right:-50px;}
+  .success-wave .beam.center{left:50%; width:80%; transform:translate(-50%,120%); opacity:0;}
+  .payment-success-overlay.active .success-wave .beam{animation:waveRiseUp 1.4s cubic-bezier(.22,1,.36,1) forwards;}
+  .payment-success-overlay.active .success-wave .beam.right{animation-delay:.08s;}
+  .payment-success-overlay.active .success-wave .beam.center{animation-delay:.16s;}
+  @keyframes waveRiseUp{
+    0%{transform:translateY(120%); opacity:0;}
+    25%{opacity:.9;}
+    100%{transform:translateY(-150%); opacity:0;}
+  }
+  .success-banner{position:relative; z-index:2; width:100%; max-width:340px; background:var(--surface); border:1px solid rgba(53,214,143,.4); border-radius:24px; padding:32px 24px 24px; text-align:center; box-shadow:0 30px 80px rgba(0,0,0,.5); transform:scale(.85) translateY(10px); opacity:0;}
+  .payment-success-overlay.active .success-banner{animation:bannerPop .5s cubic-bezier(.22,1.61,.36,1) .18s forwards;}
+  @keyframes bannerPop{to{transform:scale(1) translateY(0); opacity:1;}}
+  .success-icon-circle{width:64px; height:64px; margin:0 auto 16px; border-radius:50%; background:rgba(53,214,143,.14); display:flex; align-items:center; justify-content:center; color:var(--success);}
+  .success-title{font-family:var(--font-display); font-size:26px; letter-spacing:.02em; color:#fff; margin:0 0 6px;}
+  .success-sub{font-size:14px; color:var(--text-muted); margin:0 0 22px;}
+  .success-sub b{color:var(--success); font-family:var(--font-mono); font-weight:700;}
+
   /* cookie banner */
   .cookie-banner{
     position:fixed; left:16px; right:16px; bottom:calc(env(safe-area-inset-bottom,0) + 104px);
@@ -403,6 +444,7 @@
 #page-profile.active{display:flex; flex-direction:column; align-items:center;}
 #profile-loading, #profile-signed-in, #profile-signed-out{width:100%; max-width:420px; margin:0 auto;}
 #page-purchases > div:first-child{width:100%; max-width:560px; margin:0 auto;}
+#page-transactions > div:first-child{width:100%; max-width:560px; margin:0 auto;}
     nav.bottomnav{padding-bottom:24px;}
     .nav-wrap{max-width:440px;}
   }
@@ -554,6 +596,10 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
         Мои покупки
       </button>
+      <button class="btn-secondary" style="margin-bottom:10px;" onclick="openTransactions()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h18"/><path d="M7 15h.01"/><path d="M11 15h4"/><rect x="3" y="5" width="18" height="14" rx="3"/></svg>
+        Транзакции
+      </button>
       <div class="action-row">
         <button class="btn-primary" style="display:flex; align-items:center; justify-content:center; gap:8px;" onclick="openTopup()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h2"/></svg>
@@ -643,6 +689,16 @@
     <div id="purchases-list"></div>
   </section>
 
+  <!-- ================= ТРАНЗАКЦИИ ================= -->
+  <section id="page-transactions" class="page">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+      <button class="btn-secondary" style="width:auto; padding:10px 14px;" onclick="closeTransactions()">← Назад</button>
+      <h1 class="profile-title" style="margin:0;">ТРАНЗАКЦИИ</h1>
+    </div>
+
+    <div id="transactions-list"></div>
+  </section>
+
   <!-- ================= КОРЗИНА ================= -->
   <section id="page-cart" class="page">
     <h1 class="search-title">КОРЗИНА</h1>
@@ -651,6 +707,23 @@
   </section>
 
 </main>
+<div class="payment-success-overlay" id="payment-success-overlay">
+  <div class="success-backdrop" onclick="closeTopupSuccess()"></div>
+  <div class="success-wave">
+    <div class="beam left"></div>
+    <div class="beam center"></div>
+    <div class="beam right"></div>
+  </div>
+  <div class="success-banner">
+    <div class="success-icon-circle">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>
+    </div>
+    <h2 class="success-title">Счёт пополнен!</h2>
+    <p class="success-sub">Сумма: <b id="success-amount">0 ₽</b></p>
+    <button type="button" class="btn-primary" style="width:100%;" onclick="closeTopupSuccess()">Закрыть</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="topup-overlay" onclick="if(event.target===this) closeTopup()">
   <div class="modal-sheet">
     <div class="modal-head">
@@ -1227,13 +1300,48 @@ function updateStarsPreview() {
   document.getElementById("stars-rub-preview").textContent = `${fmt(stars * 2)} ₽`;
 }
 
-async function refreshBalanceFromServer() {
-  if (!supabaseClient) return;
-  const { data: { user } } = await supabaseClient.auth.getUser();
-  if (!user) return;
-  const { data: profile } = await supabaseClient.from("profiles").select("balance").eq("id", user.id).single();
+function animateBalanceTo(newValue) {
   const el = document.getElementById("profile-balance");
-  if (el) el.textContent = `${fmt(profile?.balance ?? 0)} ₽`;
+  if (!el) return;
+  const start = getUserBalance();
+  const target = Math.max(0, Math.round(newValue));
+  if (target === start) { el.textContent = `${fmt(target)} ₽`; return; }
+  const duration = 900;
+  const startTime = performance.now();
+  el.classList.remove("balance-flash");
+  void el.offsetWidth;
+  el.classList.add("balance-flash");
+  function step(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const current = Math.round(start + (target - start) * eased);
+    el.textContent = `${fmt(current)} ₽`;
+    if (progress < 1) requestAnimationFrame(step);
+    else setTimeout(() => el.classList.remove("balance-flash"), 500);
+  }
+  requestAnimationFrame(step);
+}
+
+async function refreshBalanceFromServer() {
+  if (!supabaseClient) return null;
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) return null;
+  const { data: profile } = await supabaseClient.from("profiles").select("balance").eq("id", user.id).single();
+  const newBalance = profile?.balance ?? 0;
+  animateBalanceTo(newBalance);
+  return newBalance;
+}
+
+function showTopupSuccess(amountRub) {
+  const overlay = document.getElementById("payment-success-overlay");
+  if (!overlay) return;
+  document.getElementById("success-amount").textContent = `${fmt(amountRub)} ₽`;
+  overlay.classList.remove("active");
+  void overlay.offsetWidth; // рестарт CSS-анимаций (волна/баннер) при повторном показе
+  overlay.classList.add("active");
+}
+function closeTopupSuccess() {
+  document.getElementById("payment-success-overlay").classList.remove("active");
 }
 
 function closeNotTelegramNotice() {
@@ -1276,7 +1384,11 @@ async function payWithStars() {
         btn.textContent = "Оплатить Stars";
         if (status === "paid") {
           closeTopup();
-          setTimeout(refreshBalanceFromServer, 1500);
+          const rub = stars * 2;
+          setTimeout(async () => {
+            await refreshBalanceFromServer();
+            showTopupSuccess(rub);
+          }, 1500);
         }
       });
     } else {
@@ -1422,6 +1534,92 @@ function openPurchaseDetail(id) {
 }
 function closePurchaseDetail() {
   document.getElementById("purchase-detail-overlay").classList.remove("active");
+}
+
+/* =========================================================
+   ТРАНЗАКЦИИ (все пополнения и списания баланса)
+   ========================================================= */
+async function getTransactions() {
+  if (!supabaseClient) {
+    // Локальный режим: доступна только история покупок (пополнения возможны только через Telegram)
+    return getPurchasesLocal().map(p => ({
+      type: "purchase",
+      title: `Покупка: ${p.title}`,
+      meta: p.server || "",
+      amount: -(p.price || 0),
+      date: p.date
+    }));
+  }
+  try {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return [];
+
+    const [paymentsRes, purchasesRes] = await Promise.all([
+      supabaseClient.from("star_payments").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+      supabaseClient.from("purchases").select("*, account:accounts(title)").eq("buyer_id", user.id).order("created_at", { ascending: false })
+    ]);
+    if (paymentsRes.error) console.error("Ошибка чтения star_payments:", paymentsRes.error);
+    if (purchasesRes.error) console.error("Ошибка чтения purchases:", purchasesRes.error);
+
+    const topups = (paymentsRes.data || []).map(p => ({
+      type: "topup",
+      title: "Пополнение баланса",
+      meta: `Telegram Stars · ${p.stars} ⭐`,
+      amount: p.rub_amount,
+      date: p.created_at
+    }));
+    const buys = (purchasesRes.data || []).map(p => ({
+      type: "purchase",
+      title: `Покупка: ${p.account?.title || "Аккаунт"}`,
+      meta: "Списание с баланса",
+      amount: -(p.price || 0),
+      date: p.created_at
+    }));
+
+    return [...topups, ...buys].sort((a, b) => new Date(b.date) - new Date(a.date));
+  } catch (e) {
+    console.error("Ошибка загрузки транзакций:", e);
+    return [];
+  }
+}
+
+function transactionRowHTML(t) {
+  const dateStr = t.date
+    ? new Date(t.date).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+    : "";
+  const isTopup = t.type === "topup";
+  return `
+  <div class="transaction-row">
+    <div class="transaction-icon ${isTopup ? "topup" : "purchase"}">
+      ${isTopup
+        ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>'
+        : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>'}
+    </div>
+    <div class="transaction-info">
+      <div class="transaction-title">${t.title}</div>
+      <div class="transaction-meta">${[t.meta, dateStr].filter(Boolean).join(" · ")}</div>
+    </div>
+    <div class="transaction-amount ${isTopup ? "positive" : "negative"}">${isTopup ? "+" : "−"}${fmt(Math.abs(t.amount))} ₽</div>
+  </div>`;
+}
+
+async function renderTransactionsList() {
+  const listEl = document.getElementById("transactions-list");
+  listEl.innerHTML = '<div class="empty">Загрузка...</div>';
+  const items = await getTransactions();
+  listEl.innerHTML = items.length
+    ? items.map(transactionRowHTML).join("")
+    : `<div class="empty">Пока нет операций с балансом.</div>`;
+}
+
+function openTransactions() {
+  document.getElementById("page-profile").classList.remove("active");
+  document.getElementById("page-transactions").classList.add("active");
+  renderTransactionsList();
+}
+function closeTransactions() {
+  document.getElementById("page-transactions").classList.remove("active");
+  document.getElementById("page-profile").classList.add("active");
 }
 
 function openTopup() {
