@@ -196,6 +196,17 @@
 
   .admin-list-title{font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-faint); margin:0 0 10px;}
 
+  .purchase-row{display:flex; align-items:center; gap:12px; border:1px solid var(--border-soft); background:var(--surface); border-radius:16px; padding:14px; margin-bottom:10px;}
+  .purchase-thumb{width:44px; height:44px; border-radius:12px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:16px; color:rgba(255,255,255,.8); background:linear-gradient(135deg,var(--surface-2),var(--bg-elevated));}
+  .purchase-info{flex:1; min-width:0;}
+  .purchase-title{font-size:13.5px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px;}
+  .purchase-meta{font-size:11.5px; color:var(--text-faint); display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .purchase-right{display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0;}
+  .purchase-price{font-family:var(--font-mono); font-weight:700; font-size:14px; color:#fff;}
+  .status-badge{font-size:10.5px; font-weight:700; letter-spacing:.02em; padding:3px 9px; border-radius:999px;}
+  .status-badge.active{color:var(--spark); background:rgba(255,176,32,.14);}
+  .status-badge.completed{color:var(--success); background:rgba(53,214,143,.14);}
+
   /* cookie banner */
   .cookie-banner{
     position:fixed; left:16px; right:16px; bottom:calc(env(safe-area-inset-bottom,0) + 104px);
@@ -462,6 +473,10 @@
           </div>
         </div>
       </div>
+      <button class="btn-secondary" style="margin-bottom:10px;" onclick="openPurchases()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        Мои покупки
+      </button>
       <div class="action-row">
         <button class="btn-primary" style="display:flex; align-items:center; justify-content:center; gap:8px;" onclick="openTopup()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h2"/></svg>
@@ -523,8 +538,27 @@
     </div>
   </section>
 
-</main>
+  <!-- ================= ПОКУПКИ ================= -->
+  <section id="page-purchases" class="page">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+      <button class="btn-secondary" style="width:auto; padding:10px 14px;" onclick="closePurchases()">← Назад</button>
+      <h1 class="profile-title" style="margin:0;">МОИ ПОКУПКИ</h1>
+    </div>
 
+    <div class="admin-tabs">
+      <button class="admin-tab active" data-ptab="active" onclick="switchPurchasesTab('active', this)">Активные</button>
+      <button class="admin-tab" data-ptab="completed" onclick="switchPurchasesTab('completed', this)">Завершённые</button>
+    </div>
+
+    <div id="purchases-tab-active" class="admin-tab-panel active">
+      <div id="purchases-active-list"></div>
+    </div>
+    <div id="purchases-tab-completed" class="admin-tab-panel">
+      <div id="purchases-completed-list"></div>
+    </div>
+  </section>
+
+</main>
 <div class="modal-overlay" id="topup-overlay" onclick="if(event.target===this) closeTopup()">
   <div class="modal-sheet">
     <div class="modal-head">
@@ -548,7 +582,7 @@
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
       <input id="topup-amount" type="number" min="15" placeholder="Сумма пополнения" />
     </div>
-    <p class="amount-hint">Мин. 15 ₽</p>
+    <p class="amount-hint">Минимальная сумма пополнения - 15 ₽</p>
 
     <button type="button" class="btn-primary" style="width:100%; margin-top:16px;" disabled>Оплатить</button>
 
@@ -850,6 +884,83 @@ const paymentMethods = {
     iconHTML: `<img src="assets/yoomoney-logo.png" alt="ЮMoney" style="width:100%; height:100%; object-fit:cover;" />`
   }
 };
+
+/* =========================================================
+   ПОКУПКИ
+   ========================================================= */
+const mockPurchases = [];
+// Пример структуры для будущих реальных покупок:
+// { id:"p1", title:"Дом в Los Santos + 3 бизнеса", server:"Sandy Shores", price:8900, status:"active", date:"2026-07-28" }
+
+async function getPurchases(status) {
+  if (!supabaseClient) {
+    return mockPurchases.filter(p => p.status === status);
+  }
+  try {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return [];
+    const { data, error } = await supabaseClient
+      .from("purchases")
+      .select("*, account:accounts(title, server:servers(name))")
+      .eq("buyer_id", user.id)
+      .eq("status", status)
+      .order("created_at", { ascending: false });
+    if (error) { console.error(error); return []; }
+    return (data || []).map(p => ({
+      id: p.id,
+      title: p.account?.title || "Аккаунт",
+      server: p.account?.server?.name || "—",
+      price: p.price,
+      status: p.status,
+      date: p.created_at
+    }));
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
+}
+
+function purchaseRowHTML(p) {
+  const dateStr = p.date ? new Date(p.date).toLocaleDateString("ru-RU") : "";
+  return `
+  <div class="purchase-row">
+    <div class="purchase-thumb">${(p.server || "?").slice(0,1)}</div>
+    <div class="purchase-info">
+      <div class="purchase-title">${p.title}</div>
+      <div class="purchase-meta"><span>${p.server}</span>${dateStr ? `<span>· ${dateStr}</span>` : ""}</div>
+    </div>
+    <div class="purchase-right">
+      <div class="purchase-price">${fmt(p.price)} ₽</div>
+      <span class="status-badge ${p.status}">${p.status === "active" ? "Активна" : "Завершена"}</span>
+    </div>
+  </div>`;
+}
+
+async function renderPurchasesTab(status) {
+  const listEl = document.getElementById(`purchases-${status}-list`);
+  listEl.innerHTML = '<div class="empty">Загрузка...</div>';
+  const items = await getPurchases(status);
+  listEl.innerHTML = items.length
+    ? items.map(purchaseRowHTML).join("")
+    : `<div class="empty">${status === "active" ? "У вас пока нет активных покупок." : "У вас пока нет завершённых покупок."}</div>`;
+}
+
+function openPurchases() {
+  document.getElementById("page-profile").classList.remove("active");
+  document.getElementById("page-purchases").classList.add("active");
+  renderPurchasesTab("active");
+  renderPurchasesTab("completed");
+}
+function closePurchases() {
+  document.getElementById("page-purchases").classList.remove("active");
+  document.getElementById("page-profile").classList.add("active");
+}
+function switchPurchasesTab(tab, btn) {
+  document.querySelectorAll("#page-purchases .admin-tab").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById("purchases-tab-active").classList.toggle("active", tab === "active");
+  document.getElementById("purchases-tab-completed").classList.toggle("active", tab === "completed");
+}
 
 function openTopup() {
   document.getElementById("topup-overlay").classList.add("active");
