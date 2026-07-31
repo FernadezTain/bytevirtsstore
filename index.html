@@ -196,23 +196,42 @@
 
   /* topup modal */
   .modal-overlay{
-    position:fixed; inset:0; z-index:100; display:none; align-items:flex-end; justify-content:center;
-    background:rgba(0,0,0,.6); backdrop-filter:blur(4px);
+    position:fixed; inset:0; z-index:100; display:none; align-items:center; justify-content:center;
+    background:rgba(0,0,0,.65); backdrop-filter:blur(4px); padding:16px;
     animation:fadeIn .25s ease both;
   }
   .modal-overlay.active{display:flex;}
+  .modal-overlay.stacked{z-index:110;}
   @keyframes fadeIn{from{opacity:0;} to{opacity:1;}}
   .modal-sheet{
-    width:100%; max-width:440px; background:var(--surface); border:1px solid var(--border);
-    border-radius:24px 24px 0 0; padding:20px; box-shadow:0 -10px 40px rgba(0,0,0,.5);
-    animation:slideUp .35s cubic-bezier(.22,1,.36,1) both;
+    width:100%; max-width:440px; max-height:calc(100dvh - 32px); overflow-y:auto;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:24px; padding:22px; box-shadow:0 20px 60px rgba(0,0,0,.6);
+    animation:popIn .3s cubic-bezier(.22,1,.36,1) both;
   }
-  @keyframes slideUp{from{transform:translateY(24px); opacity:0;} to{transform:translateY(0); opacity:1;}}
+  @keyframes popIn{from{transform:scale(.94) translateY(8px); opacity:0;} to{transform:scale(1) translateY(0); opacity:1;}}
   .modal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
   .modal-head h2{font-family:var(--font-display); font-size:20px; letter-spacing:.02em; color:#fff; margin:0;}
   .modal-close{display:flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:10px; border:1px solid var(--border); background:var(--bg-elevated); color:var(--text-muted); transition:color .2s, border-color .2s;}
   .modal-close:hover{color:var(--text); border-color:var(--border);}
   .method-label{font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-faint); margin:0 0 10px;}
+  .method-select-btn{
+    width:100%; display:flex; align-items:center; gap:12px; text-align:left;
+    border:1px solid var(--border); background:var(--surface-2); border-radius:16px;
+    padding:12px 14px; margin-bottom:16px; cursor:pointer; transition:border-color .2s, box-shadow .2s;
+  }
+  .method-select-btn:hover{border-color:rgba(255,61,31,.4);}
+  .method-select-btn.has-selection{border-color:var(--accent-2);}
+  .method-select-icon{
+    width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    background:var(--bg-elevated); color:var(--text-faint); flex-shrink:0; overflow:hidden;
+  }
+  .method-select-icon.filled{background:linear-gradient(135deg,#8b3ffd,#5b2fd6);}
+  .method-select-text{flex:1; min-width:0;}
+  .method-select-title{font-size:11px; color:var(--text-faint); margin-bottom:2px;}
+  .method-select-value{font-size:14px; font-weight:600; color:var(--text-muted);}
+  .method-select-value.chosen{color:var(--text);}
+  .method-select-chevron{color:var(--text-faint); flex-shrink:0;}
   .method-option{
     position:relative; display:flex; align-items:center; gap:14px;
     border:1.5px solid var(--border); background:var(--surface-2); border-radius:18px;
@@ -505,6 +524,32 @@
   </div>
 </div>
 
+<div class="modal-overlay stacked" id="method-overlay" onclick="if(event.target===this) closeMethodPicker()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h2>Способ оплаты</h2>
+      <button class="modal-close" onclick="closeMethodPicker()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="method-option" id="method-yoomoney" onclick="pickMethod('yoomoney', this)">
+      <div class="method-icon">
+        <img src="assets/yoomoney-logo.png" alt="ЮMoney" style="width:60%; height:60%; object-fit:contain;" />
+      </div>
+      <div class="method-info">
+        <div class="method-name">ЮMoney</div>
+        <div class="method-sub">Перевод с карты или кошелька</div>
+      </div>
+      <div class="method-check" style="display:none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+    </div>
+
+    <button type="button" class="btn-primary" style="width:100%; margin-top:4px;" id="confirm-method-btn" disabled onclick="confirmMethod()">Выбрать способ</button>
+  </div>
+</div>
+
 <nav class="bottomnav" aria-label="Основная навигация">
   <div class="nav-wrap">
     <div class="nav-island">
@@ -740,11 +785,57 @@ async function showSignedIn(user) {
   document.querySelector(".stat-grid").classList.toggle("single-col", !isAdmin);
 }
 
+let pendingMethod = null;
+let selectedMethod = null;
+
+const paymentMethods = {
+  yoomoney: {
+    name: "ЮMoney",
+    iconHTML: `<img src="assets/yoomoney-logo.png" alt="ЮMoney" style="width:100%; height:100%; object-fit:cover;" />`
+  }
+};
+
 function openTopup() {
   document.getElementById("topup-overlay").classList.add("active");
 }
 function closeTopup() {
   document.getElementById("topup-overlay").classList.remove("active");
+}
+
+function openMethodPicker() {
+  pendingMethod = selectedMethod;
+  document.querySelectorAll("#method-overlay .method-option").forEach(el => {
+    const isSel = el.id === `method-${pendingMethod}`;
+    el.classList.toggle("selected", isSel);
+    el.querySelector(".method-check").style.display = isSel ? "flex" : "none";
+  });
+  document.getElementById("confirm-method-btn").disabled = !pendingMethod;
+  document.getElementById("method-overlay").classList.add("active");
+}
+function closeMethodPicker() {
+  document.getElementById("method-overlay").classList.remove("active");
+}
+function pickMethod(id, el) {
+  pendingMethod = id;
+  document.querySelectorAll("#method-overlay .method-option").forEach(opt => {
+    const isSel = opt === el;
+    opt.classList.toggle("selected", isSel);
+    opt.querySelector(".method-check").style.display = isSel ? "flex" : "none";
+  });
+  document.getElementById("confirm-method-btn").disabled = false;
+}
+function confirmMethod() {
+  if (!pendingMethod) return;
+  selectedMethod = pendingMethod;
+  const m = paymentMethods[selectedMethod];
+  const icon = document.getElementById("method-select-icon");
+  icon.className = "method-select-icon filled";
+  icon.innerHTML = m.iconHTML;
+  const valueEl = document.getElementById("method-select-value");
+  valueEl.textContent = m.name;
+  valueEl.classList.add("chosen");
+  document.getElementById("method-select-btn").classList.add("has-selection");
+  closeMethodPicker();
 }
 
 function openAdmin() {
