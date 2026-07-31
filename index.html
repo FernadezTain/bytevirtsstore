@@ -418,6 +418,19 @@
 </head>
 <body>
 
+<div id="not-telegram-overlay" style="display:none; position:fixed; inset:0; z-index:99999; background:#0a0a0c; color:#f4f2ee; display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:32px; font-family:'Manrope', system-ui, sans-serif;">
+  <div style="width:64px; height:64px; border-radius:18px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#ff3d1f,#ff8a3d); margin-bottom:20px;">
+    <span style="font-family:'Bebas Neue', sans-serif; font-size:28px; color:#fff;">B</span>
+  </div>
+  <h1 style="font-family:'Bebas Neue', sans-serif; font-size:28px; letter-spacing:.02em; margin:0 0 10px;">Откройте ByteVirts в Telegram</h1>
+  <p style="font-size:14.5px; color:#9a9aa1; max-width:320px; margin:0 0 24px; line-height:1.5;">
+    Этот сайт работает как приложение внутри Telegram. Перейдите в бота, чтобы пользоваться каталогом, покупками и пополнением баланса.
+  </p>
+  <a href="https://t.me/ByteVirts_bot" style="display:inline-flex; align-items:center; gap:8px; padding:14px 28px; border-radius:14px; background:linear-gradient(135deg,#ff3d1f,#ff8a3d); color:#fff; font-weight:700; font-size:15px; text-decoration:none;">
+    Открыть @ByteVirts_bot
+  </a>
+</div>
+
 <header class="topbar">
   <div class="wrap topbar-inner">
     <a href="#" class="logo" onclick="goTo('home'); return false;">
@@ -668,7 +681,7 @@
 
     <div id="topup-stars-block" style="display:none;">
       <div class="auth-input">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <img src="assets/telegram-stars-logo.png" alt="" style="width:18px; height:18px; object-fit:contain;" />
         <input id="stars-amount" type="number" min="1" step="1" value="1" placeholder="Количество Stars" oninput="updateStarsPreview()" />
       </div>
       <p class="amount-hint">Минимум 1 Star · 1 Star = 2 ₽ · к оплате: <span id="stars-rub-preview">2 ₽</span></p>
@@ -718,7 +731,7 @@
 
     <div class="method-option" id="method-stars" onclick="pickMethod('stars', this)">
       <div class="method-icon">
-        <svg width="60%" height="60%" viewBox="0 0 24 24" fill="#ffb020"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <img src="assets/telegram-stars-logo.png" alt="Telegram Stars" style="width:60%; height:60%; object-fit:contain;" />
       </div>
       <div class="method-info">
         <div class="method-name">Telegram Stars</div>
@@ -1192,7 +1205,7 @@ const paymentMethods = {
   },
   stars: {
     name: "Telegram Stars",
-    iconHTML: `<svg width="60%" height="60%" viewBox="0 0 24 24" fill="#ffb020"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`
+    iconHTML: `<img src="assets/telegram-stars-logo.png" alt="Telegram Stars" style="width:100%; height:100%; object-fit:cover;" />`
   }
 };
 
@@ -1867,10 +1880,16 @@ function initCookieBanner() {
 
 /* инициализация */
 (async () => {
-  if (window.Telegram?.WebApp) {
-    window.Telegram.WebApp.ready();
-    window.Telegram.WebApp.expand();
+  const tg = window.Telegram?.WebApp;
+  const isInsideTelegram = !!(tg && tg.initData && tg.initData.length > 0);
+
+  if (!isInsideTelegram) {
+    document.getElementById("not-telegram-overlay").style.display = "flex";
+    return;
   }
+
+  tg.ready();
+  tg.expand();
   await initSupabase();
   await loadHome();
   window.__homeLoaded = true;
