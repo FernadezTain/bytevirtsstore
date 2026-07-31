@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Политика конфиденциальности — ByteVirts</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+<style>
+  :root{
+    --bg:#0a0a0c; --surface:#17171b; --surface-2:#1e1e23;
+    --border:#29292f; --border-soft:#212127;
+    --accent:#ff3d1f; --accent-2:#ff8a3d;
+    --text:#f4f2ee; --text-muted:#9a9aa1; --text-faint:#5c5c63;
+    --font-display:'Bebas Neue', sans-serif; --font-body:'Manrope', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html{color-scheme:dark;}
+  body{
+    margin:0; min-height:100dvh; color:var(--text); font-family:var(--font-body); line-height:1.6;
+    background:
+      radial-gradient(1100px 600px at 12% -10%, rgba(255,61,31,.14), transparent 60%),
+      var(--bg);
+  }
+  a{color:var(--accent);}
+  .wrap{max-width:760px; margin:0 auto; padding:32px 20px 80px;}
+  header{display:flex; align-items:center; gap:8px; margin-bottom:28px;}
+  .logo-badge{width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:18px; color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent-2)); flex-shrink:0;}
+  .logo-text{font-family:var(--font-display); font-size:20px; letter-spacing:.03em;}
+  .logo-text span{color:var(--accent);}
+  .back{margin-left:auto; font-size:13px; color:var(--text-muted); display:flex; align-items:center; gap:6px;}
+  h1{font-family:var(--font-display); font-size:38px; letter-spacing:.02em; margin:0 0 6px;}
+  .updated{font-size:13px; color:var(--text-faint); margin:0 0 32px;}
+  h2{font-family:var(--font-display); font-size:22px; letter-spacing:.02em; color:#fff; margin:32px 0 10px;}
+  p, li{font-size:14.5px; color:var(--text-muted);}
+  ul{padding-left:20px; margin:10px 0;}
+  li{margin-bottom:6px;}
+  .card{border:1px solid var(--border); background:var(--surface); border-radius:20px; padding:20px 22px; margin-bottom:24px;}
+  .toc{border:1px solid var(--border-soft); background:var(--surface-2); border-radius:16px; padding:16px 18px;}
+  .toc p{margin:0 0 8px; font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-faint);}
+  .toc ol{margin:0; padding-left:18px;}
+  .toc a{color:var(--text-muted); text-decoration:none; font-size:13.5px;}
+  .toc a:hover{color:var(--accent);}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; margin:12px 0;}
+  th, td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--border-soft); color:var(--text-muted);}
+  th{color:var(--text); font-weight:700;}
+  code{font-family:monospace; background:var(--surface-2); padding:1px 5px; border-radius:5px; font-size:12.5px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <span class="logo-badge">B</span>
+    <span class="logo-text">Byte<span>Virts</span></span>
+    <a class="back" href="index.html">← На главную</a>
+  </header>
+
+  <h1>Политика конфиденциальности</h1>
+  <p class="updated">Последнее обновление: 31 июля 2026 г.</p>
+
+  <div class="card toc">
+    <p>Содержание</p>
+    <ol>
+      <li><a href="#general">Общие положения</a></li>
+      <li><a href="#data">Какие данные мы собираем</a></li>
+      <li><a href="#purpose">Зачем мы обрабатываем данные</a></li>
+      <li><a href="#cookies">Cookie и локальное хранилище</a></li>
+      <li><a href="#storage">Хранение и защита данных</a></li>
+      <li><a href="#third-party">Передача данных третьим лицам</a></li>
+      <li><a href="#rights">Ваши права</a></li>
+      <li><a href="#children">Возрастные ограничения</a></li>
+      <li><a href="#changes">Изменения политики</a></li>
+      <li><a href="#contact">Контакты</a></li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2 id="general">1. Общие положения</h2>
+    <p>Настоящая Политика конфиденциальности (далее — «Политика») определяет порядок обработки персональных данных пользователей сервиса ByteVirts (далее — «Сервис», «мы»), доступного по адресу данного сайта. Используя Сервис, вы подтверждаете, что ознакомились с условиями настоящей Политики и согласны с ними.</p>
+    <p>Если вы не согласны с условиями Политики, пожалуйста, прекратите использование Сервиса.</p>
+
+    <h2 id="data">2. Какие данные мы собираем</h2>
+    <p>Мы обрабатываем минимально необходимый объём данных, требуемый для работы Сервиса:</p>
+    <table>
+      <tr><th>Категория</th><th>Примеры данных</th></tr>
+      <tr><td>Учётные данные</td><td>Никнейм, пароль (хранится в зашифрованном виде)</td></tr>
+      <tr><td>Данные профиля</td><td>Рейтинг, количество сделок, баланс, статус пользователя</td></tr>
+      <tr><td>Данные о сделках</td><td>История покупок и продаж аккаунтов, статусы объявлений</td></tr>
+      <tr><td>Технические данные</td><td>IP-адрес, тип устройства и браузера, файлы cookie, данные локального хранилища</td></tr>
+      <tr><td>Данные оплаты</td><td>Информация о факте и сумме пополнения баланса (без хранения полных реквизитов карт — они обрабатываются платёжным провайдером)</td></tr>
+    </table>
+    <p>Продавцом всех аккаунтов, размещённых в каталоге, выступает сам Сервис. Данные доступа к купленному аккаунту передаются покупателю Сервисом в рамках гарантийной сделки; все вопросы по сделке решаются только через раздел «Поддержка», без взаимодействия с третьими лицами.</p>
+
+    <h2 id="purpose">3. Зачем мы обрабатываем данные</h2>
+    <ul>
+      <li>Регистрация и авторизация пользователей</li>
+      <li>Обеспечение работы функции «Гарант сделки» и разрешение спорных ситуаций</li>
+      <li>Отображение каталога, поиска и карточек товаров</li>
+      <li>Пополнение и учёт баланса пользователя</li>
+      <li>Предотвращение мошенничества и нарушений правил Сервиса</li>
+      <li>Техническая поддержка пользователей</li>
+    </ul>
+
+    <h2 id="cookies">4. Cookie и локальное хранилище</h2>
+    <p>Сервис использует файлы cookie и технологии локального хранения браузера (<code>localStorage</code>) для:</p>
+    <ul>
+      <li>Сохранения сессии авторизации, чтобы не требовать повторный вход при каждом посещении;</li>
+      <li>Запоминания факта ознакомления с уведомлением о cookie;</li>
+      <li>Корректной загрузки шрифтов и статических ресурсов со сторонних CDN.</li>
+    </ul>
+    <p>Вы можете ограничить использование cookie в настройках своего браузера, однако это может повлиять на корректность работы функций входа в аккаунт.</p>
+
+    <h2 id="storage">5. Хранение и защита данных</h2>
+    <p>Данные пользователей хранятся на серверах инфраструктурных провайдеров с применением технических и организационных мер защиты: шифрование паролей, разграничение доступа, защищённое соединение (HTTPS). Мы принимаем разумные меры для предотвращения несанкционированного доступа, изменения, раскрытия или уничтожения данных.</p>
+
+    <h2 id="third-party">6. Передача данных третьим лицам</h2>
+    <p>Мы не продаём и не передаём персональные данные третьим лицам в маркетинговых целях. Данные могут передаваться следующим категориям получателей исключительно в объёме, необходимом для оказания услуги:</p>
+    <ul>
+      <li>Провайдеру инфраструктуры и аутентификации, обеспечивающему хранение аккаунтов и сессий;</li>
+      <li>Платёжным сервисам при пополнении баланса;</li>
+      <li>Государственным органам — в случаях, прямо предусмотренных законодательством.</li>
+    </ul>
+
+    <h2 id="rights">7. Ваши права</h2>
+    <p>Вы вправе:</p>
+    <ul>
+      <li>Запросить сведения об обрабатываемых данных;</li>
+      <li>Потребовать исправления неточных данных;</li>
+      <li>Запросить удаление аккаунта и связанных с ним персональных данных, если это не противоречит незавершённым сделкам и требованиям законодательства о хранении финансовой информации;</li>
+      <li>Отозвать согласие на обработку данных, что может повлечь невозможность использования отдельных функций Сервиса.</li>
+    </ul>
+
+    <h2 id="children">8. Возрастные ограничения</h2>
+    <p>Сервис не предназначен для лиц младше 18 лет. Регистрируясь, вы подтверждаете, что достигли совершеннолетия в соответствии с законодательством страны вашего проживания.</p>
+
+    <h2 id="changes">9. Изменения политики</h2>
+    <p>Мы можем время от времени обновлять настоящую Политику. Актуальная редакция всегда доступна на этой странице с указанием даты последнего обновления. Продолжение использования Сервиса после внесения изменений означает согласие с обновлённой редакцией.</p>
+
+    <h2 id="contact">10. Контакты</h2>
+    <p>По вопросам, связанным с обработкой персональных данных, вы можете обратиться через раздел «Поддержка» в личном кабинете Сервиса.</p>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Правила сервиса — ByteVirts</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+<style>
+  :root{
+    --bg:#0a0a0c; --surface:#17171b; --surface-2:#1e1e23;
+    --border:#29292f; --border-soft:#212127;
+    --accent:#ff3d1f; --accent-2:#ff8a3d;
+    --spark:#ffb020; --success:#35d68f; --danger:#ff5c5c;
+    --text:#f4f2ee; --text-muted:#9a9aa1; --text-faint:#5c5c63;
+    --font-display:'Bebas Neue', sans-serif; --font-body:'Manrope', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html{color-scheme:dark;}
+  body{
+    margin:0; min-height:100dvh; color:var(--text); font-family:var(--font-body); line-height:1.6;
+    background:
+      radial-gradient(1100px 600px at 12% -10%, rgba(255,61,31,.14), transparent 60%),
+      var(--bg);
+  }
+  a{color:var(--accent);}
+  .wrap{max-width:760px; margin:0 auto; padding:32px 20px 80px;}
+  header{display:flex; align-items:center; gap:8px; margin-bottom:28px;}
+  .logo-badge{width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:18px; color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent-2)); flex-shrink:0;}
+  .logo-text{font-family:var(--font-display); font-size:20px; letter-spacing:.03em;}
+  .logo-text span{color:var(--accent);}
+  .back{margin-left:auto; font-size:13px; color:var(--text-muted); display:flex; align-items:center; gap:6px;}
+  h1{font-family:var(--font-display); font-size:38px; letter-spacing:.02em; margin:0 0 6px;}
+  .updated{font-size:13px; color:var(--text-faint); margin:0 0 32px;}
+  h2{font-family:var(--font-display); font-size:22px; letter-spacing:.02em; color:#fff; margin:32px 0 10px;}
+  p, li{font-size:14.5px; color:var(--text-muted);}
+  ul, ol{padding-left:20px; margin:10px 0;}
+  li{margin-bottom:6px;}
+  .card{border:1px solid var(--border); background:var(--surface); border-radius:20px; padding:20px 22px; margin-bottom:24px;}
+  .toc{border:1px solid var(--border-soft); background:var(--surface-2); border-radius:16px; padding:16px 18px;}
+  .toc p{margin:0 0 8px; font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-faint);}
+  .toc ol{margin:0; padding-left:18px;}
+  .toc a{color:var(--text-muted); text-decoration:none; font-size:13.5px;}
+  .toc a:hover{color:var(--accent);}
+  .notice{display:flex; gap:10px; border:1px solid rgba(255,176,32,.3); background:rgba(255,176,32,.08); border-radius:14px; padding:14px 16px; margin:16px 0; font-size:13px; color:var(--spark); line-height:1.5;}
+  .notice svg{flex-shrink:0; margin-top:2px;}
+  .danger-notice{display:flex; gap:10px; border:1px solid rgba(255,92,92,.3); background:rgba(255,92,92,.08); border-radius:14px; padding:14px 16px; margin:16px 0; font-size:13px; color:var(--danger); line-height:1.5;}
+  .danger-notice svg{flex-shrink:0; margin-top:2px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <span class="logo-badge">B</span>
+    <span class="logo-text">Byte<span>Virts</span></span>
+    <a class="back" href="index.html">← На главную</a>
+  </header>
+
+  <h1>Правила сервиса</h1>
+  <p class="updated">Последнее обновление: 31 июля 2026 г.</p>
+
+  <div class="card toc">
+    <p>Содержание</p>
+    <ol>
+      <li><a href="#general">Общие положения</a></li>
+      <li><a href="#account">Регистрация и учётная запись</a></li>
+      <li><a href="#deals">Правила совершения сделок</a></li>
+      <li><a href="#guarantee">Гарант сделки</a></li>
+      <li><a href="#balance">Баланс и пополнение</a></li>
+      <li><a href="#prohibited">Запрещённые действия</a></li>
+      <li><a href="#disputes">Споры и разрешение конфликтов</a></li>
+      <li><a href="#liability">Ответственность и отказ от гарантий</a></li>
+      <li><a href="#sanctions">Меры и санкции</a></li>
+      <li><a href="#changes">Изменения правил</a></li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2 id="general">1. Общие положения</h2>
+    <p>ByteVirts (далее — «Сервис») — это площадка, на которой Сервис самостоятельно выступает продавцом игровых аккаунтов проекта Black Russia. Покупатель приобретает аккаунт непосредственно у Сервиса, а не у стороннего пользователя.</p>
+    <p>Регистрируясь и используя Сервис, вы соглашаетесь соблюдать настоящие Правила в полном объёме.</p>
+    <div class="notice">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
+      Все вопросы, связанные с покупкой, содержимым и передачей аккаунта, решаются исключительно через раздел «Поддержка». Прямая переписка с «продавцом» на Сервисе не предусмотрена — продавцом по всем сделкам выступает сам Сервис.
+    </div>
+
+    <div class="notice">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
+      Сервис не связан с разработчиками и администрацией проекта Black Russia и не несёт ответственности за действия игровой администрации в отношении купленных или проданных аккаунтов.
+    </div>
+
+    <h2 id="account">2. Регистрация и учётная запись</h2>
+    <ul>
+      <li>Для использования функций покупки, продажи и пополнения баланса необходима регистрация с указанием никнейма и пароля.</li>
+      <li>Пользователь обязуется предоставлять достоверную информацию и не выдавать себя за другое лицо.</li>
+      <li>Один пользователь может иметь только одну учётную запись. Создание дополнительных аккаунтов для обхода ограничений запрещено.</li>
+      <li>Ответственность за сохранность пароля и действия, совершённые под учётной записью, несёт пользователь.</li>
+    </ul>
+
+    <h2 id="deals">3. Правила совершения сделок</h2>
+    <ul>
+      <li>Сервис обязуется указывать достоверную информацию об аккаунте: уровень, сервер, содержимое склада, стоимость.</li>
+      <li>Оплата производится только через функционал Сервиса — баланс аккаунта.</li>
+      <li>После подтверждения передачи доступа к аккаунту сделка считается завершённой, и претензии по содержимому аккаунта принимаются только в порядке, предусмотренном разделом «Гарант сделки», и исключительно через обращение в поддержку.</li>
+      <li>Покупатель не взаимодействует напрямую с третьими лицами по вопросам купленного аккаунта — любая переписка или инструкции, поступившие не через официальный раздел «Поддержка» Сервиса, не имеют отношения к Сервису и должны игнорироваться.</li>
+    </ul>
+
+    <h2 id="guarantee">4. Гарант сделки</h2>
+    <p>Функция «Гарант сделки» предназначена для снижения рисков при покупке аккаунта у Сервиса:</p>
+    <ol>
+      <li>Покупатель оплачивает аккаунт с баланса;</li>
+      <li>Сервис передаёт данные доступа к аккаунту покупателю;</li>
+      <li>Если содержимое аккаунта не соответствует описанию в объявлении, покупатель обязан незамедлительно обратиться в раздел «Поддержка», не подтверждая получение;</li>
+      <li>Подтверждение получения аккаунта покупателем означает согласие с тем, что аккаунт соответствует описанию, и закрывает возможность автоматического возврата средств.</li>
+    </ol>
+    <div class="notice">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
+      Все споры по сделкам рассматриваются исключительно Сервисом через раздел «Поддержка». Сервис не организует и не допускает прямой переписки между покупателем и «продавцом», так как продавцом по всем сделкам выступает сам Сервис.
+    </div>
+
+    <h2 id="balance">5. Баланс и пополнение</h2>
+    <ul>
+      <li>Баланс пользователя используется исключительно для расчётов внутри Сервиса при совершении сделок.</li>
+      <li>Минимальная сумма пополнения — 15 ₽.</li>
+      <li>Пополнение производится через доступные способы оплаты, отображаемые в интерфейсе Сервиса.</li>
+      <li>Вывод средств с баланса за пределы Сервиса регулируется отдельными условиями, которые публикуются дополнительно по мере ввода соответствующей функциональности.</li>
+    </ul>
+
+    <h2 id="prohibited">6. Запрещённые действия</h2>
+    <ul>
+      <li>Попытки совершения оплаты в обход функционала Сервиса с последующими претензиями к Сервису;</li>
+      <li>Использование чужих учётных данных, взлом или попытки получения несанкционированного доступа к аккаунтам других пользователей;</li>
+      <li>Публикация оскорбительного, экстремистского или иного запрещённого законодательством контента при обращении в поддержку;</li>
+      <li>Доверие третьим лицам, представляющимся «продавцом» или сотрудником Сервиса вне официального раздела «Поддержка» — Сервис никогда не ведёт переговоры по сделкам иным способом.</li>
+    </ul>
+
+    <h2 id="disputes">7. Споры и разрешение конфликтов</h2>
+    <p>Продавцом по всем сделкам выступает сам Сервис, поэтому разногласий между покупателем и третьим лицом-продавцом не возникает. Любые вопросы по содержимому, качеству или передаче аккаунта пользователь решает исключительно через раздел «Поддержка», не пытаясь связаться с кем-либо ещё. Решение по обращению принимается Сервисом на основании предоставленных пользователем доказательств (скриншоты, история сделки).</p>
+
+    <h2 id="liability">8. Ответственность и отказ от гарантий</h2>
+    <p>Сервис прилагает разумные усилия для обеспечения безопасности сделок, однако не гарантирует:</p>
+    <ul>
+      <li>Отсутствие блокировок аккаунта со стороны администрации Black Russia после совершения сделки;</li>
+      <li>Бесперебойную доступность Сервиса;</li>
+      <li>Возврат средств в случаях, не предусмотренных настоящими Правилами.</li>
+    </ul>
+    <p>Сервис не несёт ответственности за последствия использования аккаунтов, приобретённых через площадку, за пределами функционала Сервиса.</p>
+
+    <h2 id="sanctions">9. Меры и санкции</h2>
+    <div class="danger-notice">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+      Нарушение настоящих Правил может повлечь предупреждение, временную блокировку функций (публикация объявлений, пополнение баланса) или полную блокировку учётной записи без возврата ранее внесённых средств, если нарушение связано с мошенническими действиями.
+    </div>
+
+    <h2 id="changes">10. Изменения правил</h2>
+    <p>Администрация Сервиса вправе вносить изменения в настоящие Правила в одностороннем порядке. Актуальная редакция всегда доступна на этой странице. Продолжение использования Сервиса после внесения изменений означает согласие пользователя с обновлённой редакцией Правил.</p>
+  </div>
+
+</div>
+</body>
+</html>
