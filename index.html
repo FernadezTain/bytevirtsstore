@@ -1393,12 +1393,25 @@ async function payFromBalance(total) {
   await addPurchaseRecords(purchased);
   const purchasedTotal = purchased.reduce((s, i) => s + (i.price || 0), 0);
 
+  if (supabaseClient) {
+    try {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (user) {
+        const { data: prof } = await supabaseClient.from("profiles").select("balance").eq("id", user.id).single();
+        const newBalance = Math.max((prof?.balance ?? 0) - purchasedTotal, 0);
+        const { error: balErr } = await supabaseClient.from("profiles").update({ balance: newBalance }).eq("id", user.id);
+        if (balErr) console.error("Ошибка списания баланса:", balErr);
+      }
+    } catch (e) {
+      console.error("Ошибка списания баланса:", e);
+    }
+  }
+
   const balanceEl = document.getElementById("profile-balance");
   if (balanceEl) {
     const current = getUserBalance();
     balanceEl.textContent = `${fmt(Math.max(current - purchasedTotal, 0))} ₽`;
   }
-
   const cartAfter = getCart();
   purchased.forEach(item => delete cartAfter[item.id]);
   saveCart(cartAfter);
