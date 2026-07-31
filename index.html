@@ -147,7 +147,7 @@
   .ball::after{content:""; position:absolute; inset:0; border-radius:50%; border-top:1px solid rgba(255,255,255,.4); opacity:.6;}
   .ball-shadow{width:12px; height:4px; margin:2px auto 0; border-radius:999px; background:rgba(0,0,0,.6); filter:blur(2px); opacity:.7;}
   .nav-island{position:relative; display:flex; align-items:center; justify-content:space-between; border-radius:28px; border:1px solid var(--border); background:rgba(23,23,27,.9); backdrop-filter:blur(20px); padding:8px; box-shadow:0 10px 40px rgba(0,0,0,.55);}
-  .nav-pill{position:absolute; top:8px; bottom:8px; left:8px; width:calc(25% - 4px); transition:transform .5s cubic-bezier(.22,1,.36,1); background:linear-gradient(135deg,var(--accent),var(--accent-2)); box-shadow:0 6px 18px rgba(255,61,31,.35);}
+  .nav-pill{position:absolute; top:8px; bottom:8px; left:8px; width:calc(25% - 4px); border-radius:20px; transition:transform .5s cubic-bezier(.22,1,.36,1); background:linear-gradient(135deg,var(--accent),var(--accent-2)); box-shadow:0 6px 18px rgba(255,61,31,.35);}
   .nav-btn{position:relative; z-index:1; display:flex; flex:1; flex-direction:column; align-items:center; justify-content:center; gap:4px; border-radius:20px; padding:10px 8px;}
   .nav-btn svg{color:var(--text-muted); transition:color .3s;}
   .nav-btn span{font-size:11px; font-weight:600; color:var(--text-muted); transition:color .3s;}
@@ -208,6 +208,10 @@
   .photo-thumb{position:relative; width:56px; height:56px; border-radius:10px; overflow:hidden; border:1px solid var(--border-soft); background:var(--bg-elevated); flex-shrink:0;}
   .photo-thumb img{width:100%; height:100%; object-fit:cover; display:block;}
   .photo-thumb.broken::after{content:"×"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--danger); font-size:18px; background:var(--surface-2);}
+  .photo-input-row{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+  .photo-input-row .auth-input{margin-bottom:0;}
+  .photo-remove-btn{flex-shrink:0; width:38px; height:38px; border-radius:12px; border:1px solid rgba(255,92,92,.3); color:var(--danger); background:var(--surface-2); display:flex; align-items:center; justify-content:center; transition:background .2s;}
+  .photo-remove-btn:hover{background:rgba(255,92,92,.1);}
 
   /* product detail modal */
   .product-gallery{display:flex; gap:8px; overflow-x:auto; margin-bottom:16px; scrollbar-width:none;}
@@ -392,6 +396,7 @@
 .btn-secondary{max-width:420px; margin-left:auto; margin-right:auto;}
 #page-profile.active{display:flex; flex-direction:column; align-items:center;}
 #profile-loading, #profile-signed-in, #profile-signed-out{width:100%; max-width:420px; margin:0 auto;}
+#page-purchases > div:first-child{width:100%; max-width:560px; margin:0 auto;}
     nav.bottomnav{padding-bottom:24px;}
     .nav-wrap{max-width:440px;}
   }
@@ -569,10 +574,15 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/></svg>
             <textarea id="new-acc-description" placeholder="Полное описание товара: что входит в аккаунт, история, особенности..."></textarea>
           </div>
-          <div class="auth-input span-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
-            <input id="new-acc-photos" type="text" placeholder="Ссылки на фото через запятую (https://...)" oninput="renderPhotoPreview()" />
+          <div class="span-2" id="photo-inputs-wrap">
+            <div class="photo-input-row" data-row>
+              <div class="auth-input" style="flex:1;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+                <input type="text" class="photo-url-input" placeholder="Ссылка на фото (https://...)" oninput="renderPhotoPreview()" />
+              </div>
+            </div>
           </div>
+          <button type="button" class="btn-secondary span-2" id="add-photo-btn" onclick="addPhotoRow()" style="margin-bottom:0;">+ Добавить изображение</button>
           <div id="photo-preview" class="photo-preview span-2"></div>
           <button type="submit" class="btn-primary span-2">Добавить товар</button>
         </form>
@@ -630,6 +640,11 @@
       </button>
     </div>
 
+    <div class="topup-notice" id="topup-insufficient-notice" style="display:none; margin-top:0; margin-bottom:16px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
+      На балансе недостаточно средств. Пополните баланс любым доступным способом
+    </div>
+
     <button type="button" class="method-select-btn" id="method-select-btn" onclick="openMethodPicker()">
       <div class="method-select-icon" id="method-select-icon">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
@@ -652,6 +667,18 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
       Возможность пополнения будет позже
     </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="checkout-overlay" onclick="if(event.target===this) closeCheckout()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h2>Оплата заказа</h2>
+      <button class="modal-close" onclick="closeCheckout()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="checkout-body"></div>
   </div>
 </div>
 
@@ -828,8 +855,8 @@ function cardHTML(a) {
   const items = (a.warehouse_items || []).slice(0,2).map(i => `<span>${i}</span>`).join("");
   return `
   <article class="card" onclick="openProduct('${a.id}')">
-    <div class="card-media">
-      <span>${a.server}</span>
+    <div class="card-media" ${a.photos && a.photos.length ? `style="background-image:url('${a.photos[0]}'); background-size:cover; background-position:center;"` : ""}>
+      ${a.photos && a.photos.length ? "" : `<span>${a.server}</span>`}
       <div class="pill-views">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
         ${fmtCompact(a.views || 0)}
@@ -964,7 +991,7 @@ function renderCartPage() {
     <div class="cart-summary">
       <div class="cart-summary-row"><span>Товаров в корзине</span><b>${items.length}</b></div>
       <div class="cart-summary-row"><span>Итого</span><b>${fmt(total)} ₽</b></div>
-      <button type="button" class="btn-primary" style="width:100%;" onclick="openTopup()">Перейти к оплате</button>
+      <button type="button" class="btn-primary" style="width:100%;" onclick="openCheckout()">Перейти к оплате</button>
     </div>`;
 }
 /* =========================================================
@@ -1158,8 +1185,48 @@ function openTopup() {
 }
 function closeTopup() {
   document.getElementById("topup-overlay").classList.remove("active");
+  document.getElementById("topup-insufficient-notice").style.display = "none";
 }
 
+function getUserBalance() {
+  const el = document.getElementById("profile-balance");
+  if (!el) return 0;
+  const digits = el.textContent.replace(/[^\d]/g, "");
+  return Number(digits) || 0;
+}
+
+function openCheckout() {
+  const cart = getCart();
+  const items = Object.values(cart);
+  if (!items.length) return;
+  const total = items.reduce((sum, i) => sum + (i.price || 0), 0);
+  const balance = getUserBalance();
+
+  if (balance >= total) {
+    document.getElementById("checkout-body").innerHTML = `
+      <p style="font-size:14px; color:var(--text-muted); margin:0 0 16px;">Оплата с баланса аккаунта.</p>
+      <div class="stat-box" style="margin-bottom:16px;">
+        <div class="stat-label">Баланс</div>
+        <div class="stat-value">${fmt(balance)} ₽</div>
+      </div>
+      <p style="display:flex; align-items:center; gap:6px; font-size:13.5px; color:var(--success); margin:0 0 18px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+        Средств хватает
+      </p>
+      <button type="button" class="btn-primary" style="width:100%;" onclick="payFromBalance(${total})">Оплатить (${fmt(total)} ₽)</button>
+    `;
+    document.getElementById("checkout-overlay").classList.add("active");
+  } else {
+    document.getElementById("topup-insufficient-notice").style.display = "flex";
+    openTopup();
+  }
+}
+function closeCheckout() {
+  document.getElementById("checkout-overlay").classList.remove("active");
+}
+function payFromBalance(total) {
+  alert("Оплата в разработке");
+}
 function openSupport() {
   document.getElementById("support-overlay").classList.add("active");
 }
@@ -1273,9 +1340,55 @@ async function deleteServer(id) {
   } catch (e) { alert(e.message); }
 }
 
+const MAX_PHOTO_ROWS = 10;
+
+function getPhotoUrls() {
+  return Array.from(document.querySelectorAll(".photo-url-input"))
+    .map(i => i.value.trim())
+    .filter(Boolean);
+}
+function addPhotoRow() {
+  const rows = document.querySelectorAll("#photo-inputs-wrap .photo-input-row");
+  if (rows.length >= MAX_PHOTO_ROWS) return;
+  const wrap = document.getElementById("photo-inputs-wrap");
+  const row = document.createElement("div");
+  row.className = "photo-input-row";
+  row.setAttribute("data-row", "");
+  row.innerHTML = `
+    <div class="auth-input" style="flex:1;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+      <input type="text" class="photo-url-input" placeholder="Ссылка на фото (https://...)" oninput="renderPhotoPreview()" />
+    </div>
+    <button type="button" class="photo-remove-btn" onclick="removePhotoRow(this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>`;
+  wrap.appendChild(row);
+  updateAddPhotoBtn();
+}
+function removePhotoRow(btn) {
+  btn.closest(".photo-input-row").remove();
+  renderPhotoPreview();
+  updateAddPhotoBtn();
+}
+function updateAddPhotoBtn() {
+  const rows = document.querySelectorAll("#photo-inputs-wrap .photo-input-row");
+  const btn = document.getElementById("add-photo-btn");
+  if (btn) btn.style.display = rows.length >= MAX_PHOTO_ROWS ? "none" : "block";
+}
+function resetPhotoRows() {
+  const wrap = document.getElementById("photo-inputs-wrap");
+  wrap.innerHTML = `
+    <div class="photo-input-row" data-row>
+      <div class="auth-input" style="flex:1;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+        <input type="text" class="photo-url-input" placeholder="Ссылка на фото (https://...)" oninput="renderPhotoPreview()" />
+      </div>
+    </div>`;
+  updateAddPhotoBtn();
+  renderPhotoPreview();
+}
 function renderPhotoPreview() {
-  const raw = document.getElementById("new-acc-photos").value;
-  const urls = raw.split(",").map(u => u.trim()).filter(Boolean);
+  const urls = getPhotoUrls();
   const box = document.getElementById("photo-preview");
   box.innerHTML = urls.map(u => `
     <div class="photo-thumb">
@@ -1315,7 +1428,7 @@ async function addAccount(e) {
   const tags = document.getElementById("new-acc-tags").value.split(",").map(t => t.trim()).filter(Boolean);
   const is_verified = document.getElementById("new-acc-verified").checked;
   const description = document.getElementById("new-acc-description").value.trim();
-  const photos = document.getElementById("new-acc-photos").value.split(",").map(u => u.trim()).filter(Boolean);
+  const photos = getPhotoUrls();
   try {
     await adminFetch("/api/admin/accounts", { method: "POST", body: JSON.stringify({ title, server_id, level, price, tags, is_verified, description, photos, status: "active" }) });
     document.getElementById("new-acc-title").value = "";
@@ -1323,8 +1436,7 @@ async function addAccount(e) {
     document.getElementById("new-acc-tags").value = "";
     document.getElementById("new-acc-verified").checked = false;
     document.getElementById("new-acc-description").value = "";
-    document.getElementById("new-acc-photos").value = "";
-    document.getElementById("photo-preview").innerHTML = "";
+    resetPhotoRows();
     loadAdminAccounts();
     loadHome();
   } catch (e) { alert(e.message); }
