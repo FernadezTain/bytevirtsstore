@@ -321,6 +321,10 @@
     background:var(--bg-elevated); color:var(--text-faint); flex-shrink:0; overflow:hidden;
   }
   .method-select-icon.filled{background:linear-gradient(135deg,#8b3ffd,#5b2fd6);}
+  .method-icon.stars-icon, .method-select-icon.filled.stars-icon{
+    background:linear-gradient(135deg,#ffc94a,#ff8a1f);
+    box-shadow:0 6px 18px rgba(255,176,32,.45);
+  }
   .method-select-text{flex:1; min-width:0;}
   .method-select-title{font-size:11px; color:var(--text-faint); margin-bottom:2px;}
   .method-select-value{font-size:14px; font-weight:600; color:var(--text-muted);}
@@ -730,7 +734,7 @@
     </div>
 
     <div class="method-option" id="method-stars" onclick="pickMethod('stars', this)">
-      <div class="method-icon">
+      <div class="method-icon stars-icon">
         <img src="assets/telegram-stars-logo.png" alt="Telegram Stars" style="width:60%; height:60%; object-fit:contain;" />
       </div>
       <div class="method-info">
@@ -1577,7 +1581,7 @@ function confirmMethod() {
   selectedMethod = pendingMethod;
   const m = paymentMethods[selectedMethod];
   const icon = document.getElementById("method-select-icon");
-  icon.className = "method-select-icon filled";
+  icon.className = "method-select-icon filled" + (selectedMethod === "stars" ? " stars-icon" : "");
   icon.innerHTML = m.iconHTML;
   const valueEl = document.getElementById("method-select-value");
   valueEl.textContent = m.name;
