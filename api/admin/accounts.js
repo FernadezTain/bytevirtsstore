@@ -1,39 +1,1778 @@
-import { supabaseAdmin, requireAdmin } from '../_admin.js';
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>ByteVirts — аккаунты Black Russia</title>
+<meta name="description" content="Маркетплейс игровых аккаунтов Black Russia. Проверенные продавцы, гарантия сделки." />
 
-export default async function handler(req, res) {
-  const user = await requireAdmin(req);
-  if (!user) return res.status(403).json({ error: 'Доступ только для администратора' });
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
 
-  if (req.method === 'GET') {
-    const { data, error } = await supabaseAdmin
-      .from('accounts').select('*, server:servers(id, name)').order('created_at', { ascending: false });
-    if (error) return res.status(500).json({ error: error.message });
-    return res.status(200).json(data);
+<!-- Supabase client (only used if you fill in CONFIG below) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+  :root{
+    --bg:#0a0a0c; --bg-elevated:#101012; --surface:#17171b; --surface-2:#1e1e23;
+    --border:#29292f; --border-soft:#212127;
+    --accent:#ff3d1f; --accent-2:#ff8a3d; --accent-soft:rgba(255,61,31,.14);
+    --spark:#ffb020; --success:#35d68f; --danger:#ff5c5c;
+    --text:#f4f2ee; --text-muted:#9a9aa1; --text-faint:#5c5c63;
+    --font-display:'Bebas Neue', sans-serif; --font-body:'Manrope', system-ui, sans-serif; --font-mono:'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  html{color-scheme:dark;}
+  body{
+    margin:0; min-height:100dvh; color:var(--text); font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+    background:
+      radial-gradient(1100px 600px at 12% -10%, rgba(255,61,31,.16), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(255,138,61,.08), transparent 55%),
+      var(--bg);
+  }
+  a{color:inherit; text-decoration:none;}
+  button{font-family:inherit; cursor:pointer; border:none; background:none; color:inherit;}
+  input{font-family:inherit;}
+  ::selection{background:var(--accent); color:#fff;}
+  .font-display{font-family:var(--font-display); letter-spacing:.02em;}
+  .font-mono{font-family:var(--font-mono);}
+  .wrap{max-width:480px; margin:0 auto; padding:0 16px;}
+
+  /* top bar */
+  header.topbar{position:sticky; top:0; z-index:40; border-bottom:1px solid var(--border-soft); background:rgba(10,10,12,.85); backdrop-filter:blur(20px);}
+  .topbar-inner{display:flex; align-items:center; justify-content:space-between; padding:12px 16px;}
+  .logo{display:flex; align-items:center; gap:8px;}
+  .logo-badge{width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:18px; color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent-2));}
+  .logo-text{font-family:var(--font-display); font-size:20px; letter-spacing:.03em;}
+  .logo-text span{color:var(--accent);}
+  .guarantee{display:flex; align-items:center; gap:6px; border:1px solid var(--border); background:var(--surface); border-radius:999px; padding:6px 12px; font-size:11px; color:var(--text-muted);}
+  .guarantee svg{color:var(--success);}
+
+  main{padding-bottom:112px; padding-top:16px; min-height:100dvh;}
+  .page{display:none; animation:fadeUp .4s cubic-bezier(.22,1,.36,1) both;}
+  .page.active{display:block;}
+  @keyframes fadeUp{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+
+  /* hero */
+  .hero{position:relative; overflow:hidden; border:1px solid var(--border); background:var(--surface); border-radius:24px; padding:20px; margin-bottom:24px;}
+  .hero::before{content:""; position:absolute; right:-40px; top:-64px; width:192px; height:192px; border-radius:50%; background:var(--accent); opacity:.3; filter:blur(60px);}
+  .hero-inner{position:relative;}
+  .badge{display:inline-flex; align-items:center; gap:6px; border-radius:999px; background:var(--accent-soft); color:var(--accent); font-size:11px; font-weight:700; padding:5px 10px; margin-bottom:12px;}
+  .hero h1{font-family:var(--font-display); font-size:34px; line-height:.95; letter-spacing:.02em; color:#fff; margin:0 0 8px;}
+  .hero p{max-width:30ch; font-size:14px; color:var(--text-muted); margin:0;}
+
+  .rail{display:flex; gap:8px; overflow-x:auto; margin-bottom:16px; scrollbar-width:none;}
+  .rail::-webkit-scrollbar{height:0;}
+  .chip{flex-shrink:0; border-radius:999px; padding:8px 16px; font-size:12px; font-weight:600; border:1px solid var(--border); background:var(--surface); color:var(--text-muted); white-space:nowrap;}
+  .chip.active{border:none; color:#fff; background:linear-gradient(90deg,var(--accent),var(--accent-2));}
+
+  .section-title{display:flex; align-items:center; gap:6px; margin-bottom:12px;}
+  .section-title svg{color:var(--accent);}
+  .section-title h2{font-family:var(--font-display); font-size:18px; letter-spacing:.02em; color:#fff; margin:0;}
+
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; padding-bottom:24px;}
+  .empty{border:1px dashed var(--border); background:var(--surface); border-radius:16px; padding:32px; text-align:center; font-size:13px; color:var(--text-muted);}
+  .empty code{font-family:var(--font-mono); color:var(--accent);}
+
+  /* account card */
+  .card{position:relative; overflow:hidden; border-radius:16px; border:1px solid var(--border); background:var(--surface); transition:border-color .2s;}
+  .card:hover{border-color:rgba(255,61,31,.4);}
+  .card-media{position:relative; height:112px; display:flex; align-items:center; justify-content:center; overflow:hidden; background:linear-gradient(135deg,var(--surface-2),var(--bg-elevated));}
+  .card-media span{font-family:var(--font-display); font-size:36px; letter-spacing:.03em; color:rgba(255,255,255,.1);}
+  .pill-views{position:absolute; left:10px; top:10px; display:flex; align-items:center; gap:4px; border-radius:999px; background:rgba(0,0,0,.5); backdrop-filter:blur(4px); padding:4px 8px; font-size:11px; color:var(--text-muted);}
+  .pill-verified{position:absolute; right:10px; top:10px; display:flex; align-items:center; gap:4px; border-radius:999px; background:rgba(53,214,143,.15); padding:4px 8px; font-size:11px; font-weight:700; color:var(--success);}
+  .reserved-overlay{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.6); backdrop-filter:blur(1px);}
+  .reserved-overlay span{border:1px solid rgba(255,255,255,.2); border-radius:999px; padding:4px 12px; font-size:12px; font-weight:600; color:#fff;}
+  .card-body{padding:14px;}
+  .card-meta{display:flex; align-items:center; gap:8px; font-size:11px; color:var(--text-muted); margin-bottom:6px;}
+  .card-meta .lvl{border-radius:6px; background:var(--accent-soft); color:var(--accent); font-family:var(--font-mono); padding:2px 6px;}
+  .card-title{font-weight:600; font-size:14px; line-height:1.3; margin:0 0 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .card-tags{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;}
+  .card-tags span{border:1px solid var(--border-soft); border-radius:6px; padding:2px 6px; font-size:10.5px; color:var(--text-muted);}
+  .card-footer{display:flex; align-items:center; justify-content:space-between; border-top:1px solid var(--border-soft); padding-top:10px;}
+  .card-rating{display:flex; align-items:center; gap:4px; font-size:11px; color:var(--text-muted);}
+  .card-rating svg{color:var(--spark); fill:var(--spark);}
+  .card-rating .seller{color:var(--text-faint);}
+  .card-price{font-family:var(--font-mono); font-weight:700; font-size:16px; color:#fff;}
+
+  .skeleton{height:224px; border-radius:16px; border:1px solid var(--border); background:var(--surface); animation:pulse 1.4s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* search */
+  .search-title{font-family:var(--font-display); font-size:26px; letter-spacing:.02em; color:#fff; margin:0 0 16px;}
+  .search-box{display:flex; align-items:center; gap:8px; border:1px solid var(--border); background:var(--surface); border-radius:16px; padding:12px 14px; margin-bottom:20px;}
+  .search-box svg{color:var(--text-muted); flex-shrink:0;}
+  .search-box input{flex:1; background:none; border:none; outline:none; color:var(--text); font-size:14px;}
+  .search-box input::placeholder{color:var(--text-faint);}
+  .search-box button{color:var(--text-muted); display:flex;}
+
+  /* profile */
+  .profile-title{font-family:var(--font-display); font-size:26px; letter-spacing:.02em; color:#fff; margin:0 0 4px;}
+  .profile-sub{font-size:14px; color:var(--text-muted); margin:0 0 20px;}
+  .auth-form{display:flex; flex-direction:column; gap:12px;}
+  .auth-input{display:flex; align-items:center; gap:8px; border:1px solid var(--border); background:var(--surface); border-radius:16px; padding:12px 14px; transition:border-color .2s, box-shadow .2s;}
+  .auth-input:focus-within{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);}
+  .auth-input svg{color:var(--text-muted); flex-shrink:0;}
+  .auth-input input{flex:1; background:none; border:none; outline:none; color:var(--text); font-size:14px;}
+  .auth-input input::placeholder{color:var(--text-faint);}
+  .btn-primary{border-radius:16px; padding:13px; text-align:center; font-size:14px; font-weight:700; color:#fff; background:linear-gradient(90deg,var(--accent),var(--accent-2)); box-shadow:0 8px 24px rgba(255,61,31,.35); transition:transform .15s ease, filter .2s ease;}
+  .btn-primary:hover{transform:translateY(-1px); filter:brightness(1.06);}
+  .btn-primary:active{transform:translateY(0); filter:brightness(.96);}
+  .btn-secondary{display:flex; align-items:center; justify-content:center; gap:8px; width:100%; border-radius:16px; border:1px solid var(--border); background:var(--surface); padding:13px; font-size:14px; font-weight:600; color:var(--text-muted); transition:border-color .2s, color .2s;}
+  .btn-secondary:hover{border-color:rgba(255,61,31,.4); color:var(--text);}
+  .notice-ok{border:1px solid rgba(53,214,143,.3); background:rgba(53,214,143,.1); border-radius:16px; padding:14px; font-size:13px; color:var(--success);}
+  .error-text{font-size:12px; color:var(--danger); margin:0;}
+  .consent-text{font-size:11.5px; line-height:1.5; color:var(--text-faint); margin:10px 2px 0; text-align:center;}
+  .consent-text a{color:var(--accent); text-decoration:underline;}
+  .profile-card{border:1px solid var(--border); background:var(--surface); border-radius:24px; padding:20px; margin-bottom:20px; user-select:none; -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none;}
+  .profile-head{display:flex; align-items:center; gap:12px; margin-bottom:16px;}
+  .avatar{width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:24px; color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent-2));}
+  .profile-name{font-family:var(--font-display); font-size:20px; letter-spacing:.02em; color:#fff; margin:0;}
+  .profile-rating{display:flex; align-items:center; gap:4px; font-size:12px; color:var(--text-muted);}
+  .profile-rating svg{color:var(--spark); fill:var(--spark);}
+  .stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .stat-grid.single-col{grid-template-columns:1fr;}
+  .stat-box{border:1px solid var(--border-soft); background:var(--bg-elevated); border-radius:16px; padding:14px;}
+  .stat-label{display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-muted); margin-bottom:6px;}
+  .stat-value{font-family:var(--font-mono); font-weight:700; font-size:17px; color:#fff;}
+  .stat-value.text{font-family:var(--font-body); font-size:14px;}
+
+  /* bottom nav */
+  nav.bottomnav{position:fixed; inset-inline:0; bottom:0; z-index:50; padding:12px 16px calc(env(safe-area-inset-bottom,0) + 16px);}
+  .nav-wrap{position:relative; max-width:420px; margin:0 auto;}
+  .ball-track{position:absolute; top:-14px; height:20px; width:20px; transition:left .5s cubic-bezier(.22,1,.36,1); pointer-events:none;}
+  .ball{width:20px; height:20px; border-radius:50%; transition:transform .5s cubic-bezier(.22,1,.36,1); box-shadow:0 4px 10px rgba(255,61,31,.55); background:radial-gradient(circle at 32% 28%, #ffb37a, var(--accent-2) 40%, var(--accent) 78%); position:relative;}
+  .ball::after{content:""; position:absolute; inset:0; border-radius:50%; border-top:1px solid rgba(255,255,255,.4); opacity:.6;}
+  .ball-shadow{width:12px; height:4px; margin:2px auto 0; border-radius:999px; background:rgba(0,0,0,.6); filter:blur(2px); opacity:.7;}
+  .nav-island{position:relative; display:flex; align-items:center; justify-content:space-between; border-radius:28px; border:1px solid var(--border); background:rgba(23,23,27,.9); backdrop-filter:blur(20px); padding:8px; box-shadow:0 10px 40px rgba(0,0,0,.55);}
+  .nav-pill{position:absolute; top:8px; bottom:8px; left:8px; width:calc(25% - 4px); border-radius:20px; transition:transform .5s cubic-bezier(.22,1,.36,1); background:linear-gradient(135deg,var(--accent),var(--accent-2)); box-shadow:0 6px 18px rgba(255,61,31,.35);}
+  .nav-btn{position:relative; z-index:1; display:flex; flex:1; flex-direction:column; align-items:center; justify-content:center; gap:4px; border-radius:20px; padding:10px 8px;}
+  .nav-btn svg{color:var(--text-muted); transition:color .3s;}
+  .nav-btn span{font-size:11px; font-weight:600; color:var(--text-muted); transition:color .3s;}
+  .nav-btn.active svg, .nav-btn.active span{color:#fff;}
+
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:.001ms !important; transition-duration:.001ms !important;} }
+
+  .admin-tabs{display:flex; gap:8px; margin-bottom:16px; width:100%; max-width:560px; margin-left:auto; margin-right:auto;}
+  .admin-tab{flex:1; text-align:center; border-radius:12px; padding:10px 16px; font-size:13px; font-weight:600; border:1px solid var(--border); background:var(--surface); color:var(--text-muted); transition:background .2s, color .2s;}
+  .admin-tab.active{border-color:transparent; color:#fff; background:linear-gradient(90deg,var(--accent),var(--accent-2));}
+  .admin-tab-panel{width:100%; max-width:560px; margin:0 auto; display:none;}
+  .admin-tab-panel.active{display:block; animation:fadeUp .35s cubic-bezier(.22,1,.36,1) both;}
+  #page-admin.active{display:flex; flex-direction:column; align-items:center;}
+  #page-admin > div:first-child{width:100%; max-width:560px; margin:0 auto;}
+
+  .admin-card{border:1px solid var(--border); background:var(--surface); border-radius:20px; padding:18px; margin-bottom:20px;}
+  .admin-form-grid{display:grid; grid-template-columns:1fr; gap:12px;}
+
+  .auth-input select, select.auth-input, .select-wrap select{
+    width:100%; background:transparent; border:none; outline:none;
+    color:var(--text); font-size:14px; appearance:none; -webkit-appearance:none; -moz-appearance:none;
+    padding:0; margin:0; cursor:pointer;
+  }
+  .select-wrap{
+    position:relative; display:flex; align-items:center;
+    border:1px solid var(--border); background:var(--surface); border-radius:16px; padding:12px 14px;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  .select-wrap:focus-within{ border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+  .select-wrap select{ padding-right:20px; }
+  .select-wrap::after{
+    content:""; position:absolute; right:14px; top:50%; width:8px; height:8px;
+    border-right:2px solid var(--text-muted); border-bottom:2px solid var(--text-muted);
+    transform:translateY(-70%) rotate(45deg); pointer-events:none;
+    transition:transform .2s, border-color .2s;
+  }
+  .select-wrap:focus-within::after{ border-color:var(--accent); transform:translateY(-30%) rotate(225deg); }
+
+  .check-row{
+    display:flex; align-items:center; gap:10px; border:1px solid var(--border); background:var(--surface);
+    border-radius:16px; padding:12px 14px; font-size:13px; color:var(--text-muted);
+    transition:border-color .2s, box-shadow .2s;
+  }
+  .check-row:focus-within{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);}
+  .check-row input{width:16px; height:16px; accent-color:var(--accent); flex-shrink:0;}
+
+  .admin-list-title{font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-faint); margin:0 0 10px;}
+
+  .auth-input.textarea-wrap{align-items:flex-start; padding-top:12px;}
+  .auth-input.textarea-wrap textarea{
+    flex:1; background:none; border:none; outline:none; resize:vertical;
+    color:var(--text); font-size:14px; font-family:inherit; min-height:90px; line-height:1.5;
+  }
+  .auth-input.textarea-wrap textarea::placeholder{color:var(--text-faint);}
+  .auth-input.textarea-wrap svg{margin-top:2px;}
+
+  .photo-preview{display:flex; flex-wrap:wrap; gap:8px; margin-top:2px;}
+  .photo-thumb{position:relative; width:56px; height:56px; border-radius:10px; overflow:hidden; border:1px solid var(--border-soft); background:var(--bg-elevated); flex-shrink:0;}
+  .photo-thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+  .photo-thumb.broken::after{content:"×"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--danger); font-size:18px; background:var(--surface-2);}
+  .photo-input-row{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+  .photo-input-row .auth-input{margin-bottom:0;}
+  .photo-remove-btn{flex-shrink:0; width:38px; height:38px; border-radius:12px; border:1px solid rgba(255,92,92,.3); color:var(--danger); background:var(--surface-2); display:flex; align-items:center; justify-content:center; transition:background .2s;}
+  .photo-remove-btn:hover{background:rgba(255,92,92,.1);}
+
+  /* product detail modal */
+  .product-gallery{display:flex; gap:8px; overflow-x:auto; margin-bottom:16px; scrollbar-width:none;}
+  .product-gallery::-webkit-scrollbar{height:0;}
+  .product-gallery img{width:140px; height:100px; object-fit:cover; border-radius:14px; border:1px solid var(--border-soft); flex-shrink:0;}
+  .product-gallery-empty{width:100%; height:140px; border-radius:14px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--surface-2),var(--bg-elevated)); font-family:var(--font-display); font-size:22px; color:rgba(255,255,255,.12);}
+  .product-meta-row{display:flex; align-items:center; gap:8px; font-size:11px; color:var(--text-muted); margin-bottom:8px; flex-wrap:wrap;}
+  .product-meta-row .lvl{border-radius:6px; background:var(--accent-soft); color:var(--accent); font-family:var(--font-mono); padding:2px 6px;}
+  .product-detail-title{font-family:var(--font-display); font-size:24px; letter-spacing:.02em; color:#fff; margin:0 0 10px;}
+  .product-tags{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px;}
+  .product-tags span{border:1px solid var(--border-soft); border-radius:8px; padding:4px 9px; font-size:11.5px; color:var(--text-muted);}
+  .product-desc{font-size:13.5px; line-height:1.6; color:var(--text-muted); margin-bottom:18px; white-space:pre-line;}
+  .product-price-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .product-price{font-family:var(--font-mono); font-weight:700; font-size:24px; color:#fff;}
+  .btn-cart{width:100%; display:flex; align-items:center; justify-content:center; gap:8px;}
+  .btn-cart.in-cart{background:var(--surface-2); color:var(--success); border:1px solid rgba(53,214,143,.35); box-shadow:none;}
+
+  /* cart */
+  .cart-row{display:flex; align-items:center; gap:12px; border:1px solid var(--border-soft); background:var(--surface); border-radius:16px; padding:14px; margin-bottom:10px;}
+  .cart-thumb{width:48px; height:48px; border-radius:12px; flex-shrink:0; background:linear-gradient(135deg,var(--surface-2),var(--bg-elevated));}
+  .cart-info{flex:1; min-width:0;}
+  .cart-title{font-size:13.5px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px;}
+  .cart-meta{font-size:11.5px; color:var(--text-faint);}
+  .cart-right{display:flex; flex-direction:column; align-items:flex-end; gap:8px; flex-shrink:0;}
+  .cart-price{font-family:var(--font-mono); font-weight:700; font-size:14px; color:#fff;}
+  .cart-remove{font-size:11px; font-weight:600; color:var(--danger); border:1px solid rgba(255,92,92,.3); border-radius:8px; padding:4px 9px;}
+  .cart-summary{border:1px solid var(--border); background:var(--surface); border-radius:18px; padding:16px; margin-top:6px;}
+  .cart-summary-row{display:flex; align-items:center; justify-content:space-between; font-size:14px; color:var(--text-muted); margin-bottom:12px;}
+  .cart-summary-row b{color:#fff; font-family:var(--font-mono); font-size:17px;}
+
+  /* nav badge */
+  .nav-badge{position:absolute; top:2px; right:14px; min-width:16px; height:16px; padding:0 4px; border-radius:999px; background:var(--accent); color:#fff; font-size:9.5px; font-weight:700; display:none; align-items:center; justify-content:center; z-index:2; box-shadow:0 2px 6px rgba(255,61,31,.5);}
+  .nav-badge.show{display:flex;}
+
+  .purchase-row{display:flex; align-items:center; gap:12px; border:1px solid var(--border-soft); background:var(--surface); border-radius:16px; padding:14px; margin-bottom:10px;}
+  .purchase-thumb{width:44px; height:44px; border-radius:12px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:16px; color:rgba(255,255,255,.8); background:linear-gradient(135deg,var(--surface-2),var(--bg-elevated));}
+  .purchase-info{flex:1; min-width:0;}
+  .purchase-title{font-size:13.5px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px;}
+  .purchase-meta{font-size:11.5px; color:var(--text-faint); display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .purchase-right{display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0;}
+  .purchase-price{font-family:var(--font-mono); font-weight:700; font-size:14px; color:#fff;}
+  .status-badge{font-size:10.5px; font-weight:700; letter-spacing:.02em; padding:3px 9px; border-radius:999px;}
+  .status-badge.active{color:var(--spark); background:rgba(255,176,32,.14);}
+  .status-badge.completed{color:var(--success); background:rgba(53,214,143,.14);}
+
+  /* cookie banner */
+  .cookie-banner{
+    position:fixed; left:16px; right:16px; bottom:calc(env(safe-area-inset-bottom,0) + 104px);
+    z-index:90; max-width:560px; margin:0 auto;
+    display:none; align-items:center; gap:14px;
+    border:1px solid var(--border); background:rgba(23,23,27,.96); backdrop-filter:blur(16px);
+    border-radius:18px; padding:14px 16px; box-shadow:0 14px 40px rgba(0,0,0,.5);
+    animation:fadeUp .4s cubic-bezier(.22,1,.36,1) both;
+  }
+  .cookie-banner.active{display:flex;}
+  .cookie-banner p{flex:1; margin:0; font-size:12.5px; line-height:1.4; color:var(--text-muted);}
+  .cookie-banner p a{color:var(--accent); text-decoration:underline;}
+  .cookie-banner button{
+    flex-shrink:0; border-radius:12px; padding:9px 16px; font-size:13px; font-weight:700; color:#fff;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2)); box-shadow:0 6px 18px rgba(255,61,31,.3);
+    transition:transform .15s ease, filter .2s ease;
+  }
+  .cookie-banner button:hover{transform:translateY(-1px); filter:brightness(1.06);}
+
+  @media (min-width:720px){
+    .cookie-banner{bottom:calc(env(safe-area-inset-bottom,0) + 96px); left:24px; right:24px;}
   }
 
-  if (req.method === 'POST') {
-    const { title, server_id, level, price, tags, is_verified, status, photos, description, secret_info } = req.body;
-    const { data, error } = await supabaseAdmin.from('accounts')
-      .insert({ title, server_id, level, price, tags, is_verified, status: status || 'active', photos, description, secret_info })
-      .select().single();
-    if (error) return res.status(500).json({ error: error.message });
-    return res.status(200).json(data);
+  .action-row{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;}
+  .action-row .btn-primary, .action-row .btn-secondary{margin-bottom:0;}
+  .support-notice{display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; padding:20px 8px 8px;}
+  .support-notice svg{color:var(--text-faint);}
+  .support-notice p{font-size:14px; color:var(--text-muted); margin:0;}
+
+  /* topup modal */
+  .modal-overlay{
+    position:fixed; inset:0; z-index:100; display:none; align-items:center; justify-content:center;
+    background:rgba(0,0,0,.65); backdrop-filter:blur(4px); padding:16px;
+    animation:fadeIn .25s ease both;
+  }
+  .modal-overlay.active{display:flex;}
+  .modal-overlay.stacked{z-index:110;}
+  @keyframes fadeIn{from{opacity:0;} to{opacity:1;}}
+  .modal-sheet{
+    width:100%; max-width:440px; max-height:calc(100dvh - 32px); overflow-y:auto;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:24px; padding:22px; box-shadow:0 20px 60px rgba(0,0,0,.6);
+    animation:popIn .3s cubic-bezier(.22,1,.36,1) both;
+  }
+  @keyframes popIn{from{transform:scale(.94) translateY(8px); opacity:0;} to{transform:scale(1) translateY(0); opacity:1;}}
+  .modal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
+  .modal-head h2{font-family:var(--font-display); font-size:20px; letter-spacing:.02em; color:#fff; margin:0;}
+  .modal-close{display:flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:10px; border:1px solid var(--border); background:var(--bg-elevated); color:var(--text-muted); transition:color .2s, border-color .2s;}
+  .modal-close:hover{color:var(--text); border-color:var(--border);}
+  .method-label{font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-faint); margin:0 0 10px;}
+  .method-select-btn{
+    width:100%; display:flex; align-items:center; gap:12px; text-align:left;
+    border:1px solid var(--border); background:var(--surface-2); border-radius:16px;
+    padding:12px 14px; margin-bottom:16px; cursor:pointer; transition:border-color .2s, box-shadow .2s;
+  }
+  .method-select-btn:hover{border-color:rgba(255,61,31,.4);}
+  .method-select-btn.has-selection{border-color:var(--accent-2);}
+  .method-select-icon{
+    width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    background:var(--bg-elevated); color:var(--text-faint); flex-shrink:0; overflow:hidden;
+  }
+  .method-select-icon.filled{background:linear-gradient(135deg,#8b3ffd,#5b2fd6);}
+  .method-select-text{flex:1; min-width:0;}
+  .method-select-title{font-size:11px; color:var(--text-faint); margin-bottom:2px;}
+  .method-select-value{font-size:14px; font-weight:600; color:var(--text-muted);}
+  .method-select-value.chosen{color:var(--text);}
+  .method-select-chevron{color:var(--text-faint); flex-shrink:0;}
+  .method-option{
+    position:relative; display:flex; align-items:center; gap:14px;
+    border:1.5px solid var(--border); background:var(--surface-2); border-radius:18px;
+    padding:16px; margin-bottom:16px; cursor:pointer; overflow:hidden;
+    transition:border-color .25s, box-shadow .25s, transform .2s;
+  }
+  .method-option::before{
+    content:""; position:absolute; inset:0; opacity:0; transition:opacity .3s;
+    background:radial-gradient(420px 160px at 0% 0%, rgba(139,63,253,.35), transparent 70%);
+  }
+  .method-option.selected{border-color:transparent; box-shadow:0 0 0 2px var(--accent-2), 0 10px 30px rgba(255,61,31,.18);}
+  .method-option.selected::before{opacity:1;}
+  .method-option:active{transform:scale(.99);}
+  .method-icon{
+    position:relative; width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-display); font-size:20px; letter-spacing:.02em; color:#fff; flex-shrink:0;
+    background:linear-gradient(135deg,#8b3ffd,#5b2fd6);
+    box-shadow:0 6px 18px rgba(139,63,253,.4);
+  }
+  .method-info{position:relative; flex:1; min-width:0;}
+  .method-name{font-size:15px; font-weight:700; color:var(--text); letter-spacing:.01em;}
+  .method-sub{font-size:12px; color:var(--text-faint); margin-top:2px;}
+  .method-check{
+    position:relative; flex-shrink:0; width:26px; height:26px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff;
+    box-shadow:0 4px 12px rgba(255,61,31,.4);
+  }
+  .amount-hint{font-size:11px; color:var(--text-faint); margin:6px 2px 0;}
+  .btn-primary:disabled{opacity:.45; cursor:not-allowed; box-shadow:none;}
+  .btn-primary:disabled:hover{transform:none; filter:none;}
+  .topup-notice{display:flex; align-items:flex-start; gap:8px; border:1px solid rgba(255,176,32,.3); background:rgba(255,176,32,.08); border-radius:14px; padding:12px 14px; margin-top:14px; font-size:12.5px; color:var(--spark); line-height:1.4;}
+  .topup-notice svg{flex-shrink:0; margin-top:1px;}
+
+  .admin-row{display:flex; align-items:center; justify-content:space-between; gap:12px; border:1px solid var(--border-soft); background:var(--surface); border-radius:14px; padding:14px; margin-bottom:8px; font-size:13px;}
+  .admin-row-info{min-width:0; flex:1;}
+  .admin-row-info b{display:block; font-size:13px; color:var(--text); margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .admin-row-info .meta{display:block; margin-top:2px; font-size:12px; color:var(--text-faint);}
+  .admin-row-actions{display:flex; gap:8px; flex-shrink:0;}
+  .admin-row-actions button{font-size:12px; font-weight:600; padding:7px 12px; border-radius:9px; border:1px solid var(--border); color:var(--text-muted); background:var(--bg-elevated); transition:border-color .2s, color .2s;}
+  .admin-row-actions button:hover{color:var(--text); border-color:var(--border);}
+  .admin-row-actions button.danger{color:var(--danger); border-color:rgba(255,92,92,.3);}
+  .admin-row-actions button.danger:hover{background:rgba(255,92,92,.1);}
+
+  @media (min-width:480px){
+    .admin-form-grid.two-col{grid-template-columns:1fr 1fr;}
+    .admin-form-grid.two-col .span-2{grid-column:1 / -1;}
   }
 
-  if (req.method === 'PUT') {
-    const { id, ...fields } = req.body;
-    const { data, error } = await supabaseAdmin.from('accounts')
-      .update(fields).eq('id', id).select().single();
-    if (error) return res.status(500).json({ error: error.message });
-    return res.status(200).json(data);
+  /* ================= DESKTOP / WIDE SCREENS ================= */
+  @media (min-width: 720px){
+    .wrap{max-width:900px; padding:0 24px;}
+    .topbar-inner{max-width:1200px; margin:0 auto; padding:14px 24px;}
+    main{padding-top:28px; padding-bottom:64px;}
+    .grid{grid-template-columns:repeat(3, 1fr); gap:16px;}
+    .hero{display:flex; align-items:center; gap:32px; padding:36px 40px;}
+    .hero-inner{flex:1;}
+    .hero h1{font-size:48px;}
+    .hero p{max-width:42ch; font-size:15px;}
+    .hero::after{
+      content:""; flex-shrink:0; width:220px; height:220px; border-radius:28px;
+      background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,.12), transparent 60%),
+        linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow:0 20px 60px rgba(255,61,31,.35);
+    }
+    .rail{margin-bottom:20px;}
+    .search-box, .search-title{max-width:640px;}
+    .auth-form, .profile-card{max-width:420px; margin-left:auto; margin-right:auto;}
+.btn-secondary{max-width:420px; margin-left:auto; margin-right:auto;}
+#page-profile.active{display:flex; flex-direction:column; align-items:center;}
+#profile-loading, #profile-signed-in, #profile-signed-out{width:100%; max-width:420px; margin:0 auto;}
+#page-purchases > div:first-child{width:100%; max-width:560px; margin:0 auto;}
+    nav.bottomnav{padding-bottom:24px;}
+    .nav-wrap{max-width:440px;}
   }
 
-  if (req.method === 'DELETE') {
-    const { id } = req.body;
-    const { error } = await supabaseAdmin.from('accounts').delete().eq('id', id);
-    if (error) return res.status(500).json({ error: error.message });
-    return res.status(200).json({ ok: true });
+  @media (min-width: 1100px){
+    .wrap{max-width:1180px;}
+    .topbar-inner{max-width:1200px;}
+    .grid{grid-template-columns:repeat(4, 1fr); gap:18px;}
+    .hero h1{font-size:56px;}
   }
 
-  return res.status(405).end();
+  @media (min-width: 720px) and (hover:hover){
+    .card{transition:transform .25s, border-color .2s;}
+    .card:hover{transform:translateY(-3px);}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a href="#" class="logo" onclick="goTo('home'); return false;">
+      <span class="logo-badge">B</span>
+      <span class="logo-text">Byte<span>Virts</span></span>
+    </a>
+    <div class="guarantee">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+      <span>Гарант сделки</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ================= ГЛАВНАЯ ================= -->
+  <section id="page-home" class="page active">
+    <div class="hero">
+      <div class="hero-inner">
+        <div class="badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 11-14h-7l1-6Z"/></svg>
+          Сделка под гарантом
+        </div>
+        <h1>АККАУНТЫ<br/>BLACK RUSSIA</h1>
+        <p>Покупай и продавай прокачанные аккаунты без риска — деньги замораживаются до подтверждения передачи доступа.</p>
+      </div>
+    </div>
+
+    <div class="rail" id="server-rail"></div>
+
+    <div class="section-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a6.5 6.5 0 1 1-13 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5Z"/></svg>
+      <h2>В ТРЕНДЕ</h2>
+    </div>
+
+    <div id="home-grid" class="grid"></div>
+  </section>
+
+  <!-- ================= ПОИСК ================= -->
+  <section id="page-search" class="page">
+    <h1 class="search-title">ПОИСК АККАУНТОВ</h1>
+    <div class="search-box">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="search-input" type="text" placeholder="Название, сервер, предмет..." />
+      <button id="search-clear" style="display:none;" onclick="clearSearch()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="search-grid" class="grid"></div>
+  </section>
+
+  <!-- ================= ПРОФИЛЬ ================= -->
+  <section id="page-profile" class="page">
+    <div id="profile-loading">
+      <div class="skeleton" style="height:160px;"></div>
+    </div>
+
+    <div id="profile-signed-out" style="display:none;">
+      <h1 class="profile-title" id="auth-title">ВХОД В АККАУНТ</h1>
+      <p class="profile-sub" id="auth-sub">Войдите под своим ником и паролем.</p>
+
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-mode="login" onclick="switchAuthMode('login', this)">Вход</button>
+        <button class="admin-tab" data-mode="register" onclick="switchAuthMode('register', this)">Регистрация</button>
+      </div>
+
+      <div id="signin-sent" class="notice-ok" style="display:none;"></div>
+
+      <form id="signin-form" class="auth-form" onsubmit="handleAuthSubmit(event)">
+        <div class="auth-input">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          <input id="auth-username" type="text" required placeholder="Ник" minlength="3" maxlength="20" pattern="[A-Za-z0-9_]+" title="Только латиница, цифры и подчёркивание" />
+        </div>
+        <div class="auth-input">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input id="auth-password" type="password" required placeholder="Пароль" minlength="6" />
+        </div>
+        <p id="signin-error" class="error-text" style="display:none;"></p>
+        <button type="submit" class="btn-primary" id="auth-submit-btn">Войти</button>
+        <p class="consent-text">Нажимая «<span id="consent-action">Войти</span>», вы соглашаетесь с <a href="rules.html" target="_blank" rel="noopener">правилами сервиса</a> и <a href="privacy.html" target="_blank" rel="noopener">политикой конфиденциальности</a>.</p>
+      </form>
+      <p style="margin-top:16px; font-size:12px; color:var(--text-faint);">Вход временно недоступен. Каталог и поиск аккаунтов работают в обычном режиме.</p>
+    </div>
+
+    <div id="profile-signed-in" style="display:none;">
+      <div class="profile-card">
+        <div class="profile-head">
+          <div class="avatar" id="profile-avatar">?</div>
+          <div>
+            <h1 class="profile-name" id="profile-username">—</h1>
+            <div class="profile-rating">
+              <svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <span id="profile-rating">0.0</span>
+              <span class="seller" id="profile-deals">· 0 сделок</span>
+            </div>
+          </div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-box">
+            <div class="stat-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Баланс</div>
+            <div class="stat-value" id="profile-balance">0 ₽</div>
+          </div>
+          <div class="stat-box" id="profile-status-box">
+            <div class="stat-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>Статус</div>
+            <div class="stat-value text" id="profile-status">Пользователь</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-secondary" style="margin-bottom:10px;" onclick="openPurchases()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        Мои покупки
+      </button>
+      <div class="action-row">
+        <button class="btn-primary" style="display:flex; align-items:center; justify-content:center; gap:8px;" onclick="openTopup()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h2"/></svg>
+          Пополнить
+        </button>
+        <button class="btn-secondary" style="margin-bottom:0;" onclick="openSupport()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a2.9 2.9 0 0 1 5.7.9c0 2-2.9 2-2.9 4"/><path d="M12 17h.01"/></svg>
+          Поддержка
+        </button>
+      </div>
+      <button class="btn-secondary" id="admin-panel-btn" style="display:none; margin-bottom:10px;" onclick="openAdmin()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        Панель управления
+      </button>
+      <button class="btn-secondary" onclick="handleSignOut()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        Выйти из аккаунта
+      </button>
+    </div>
+  </section>
+
+  <!-- ================= АДМИН-ПАНЕЛЬ ================= -->
+  <section id="page-admin" class="page">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+      <button class="btn-secondary" style="width:auto; padding:10px 14px;" onclick="closeAdmin()">← Назад</button>
+      <h1 class="profile-title" style="margin:0;">ПАНЕЛЬ УПРАВЛЕНИЯ</h1>
+    </div>
+
+    <div class="admin-tabs">
+      <button class="admin-tab active" data-tab="accounts" onclick="switchAdminTab('accounts', this)">Товары</button>
+      <button class="admin-tab" data-tab="servers" onclick="switchAdminTab('servers', this)">Сервера</button>
+    </div>
+
+    <div id="admin-tab-accounts" class="admin-tab-panel active">
+      <div class="admin-card">
+        <form class="admin-form-grid two-col" onsubmit="addAccount(event)">
+          <div class="auth-input span-2"><input id="new-acc-title" type="text" placeholder="Название товара" required /></div>
+          <div class="select-wrap"><select id="new-acc-server"></select></div>
+          <div class="auth-input"><input id="new-acc-level" type="number" placeholder="Уровень" value="1" /></div>
+          <div class="auth-input"><input id="new-acc-price" type="number" placeholder="Цена, ₽" required /></div>
+          <label class="check-row"><input id="new-acc-verified" type="checkbox" /> Проверенный продавец</label>
+          <div class="auth-input span-2"><input id="new-acc-tags" type="text" placeholder="Теги через запятую (АК-47, Бронежилет x5)" /></div>
+          <div class="auth-input textarea-wrap span-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/></svg>
+            <textarea id="new-acc-description" placeholder="Полное описание товара: что входит в аккаунт, история, особенности..."></textarea>
+          </div>
+          <div class="auth-input textarea-wrap span-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15v2m0-13a4 4 0 0 0-4 4v3H7a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2h-1V8a4 4 0 0 0-4-4Z"/></svg>
+            <textarea id="new-acc-secret" placeholder="Данные товара после оплаты: логин, пароль и т.д. (видно только покупателю)"></textarea>
+          </div>
+          <div class="span-2" id="photo-inputs-wrap">
+            <div class="photo-input-row" data-row>
+              <div class="auth-input" style="flex:1;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+                <input type="text" class="photo-url-input" placeholder="Ссылка на фото (https://...)" oninput="renderPhotoPreview()" />
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-secondary span-2" id="add-photo-btn" onclick="addPhotoRow()" style="margin-bottom:0;">+ Добавить изображение</button>
+          <div id="photo-preview" class="photo-preview span-2"></div>
+          <button type="submit" class="btn-primary span-2">Добавить товар</button>
+        </form>
+      </div>
+      <p class="admin-list-title">Список товаров</p>
+      <div id="admin-accounts-list"></div>
+    </div>
+    <div id="admin-tab-servers" class="admin-tab-panel">
+      <div class="admin-card">
+        <form class="admin-form-grid two-col" onsubmit="addServer(event)">
+          <div class="auth-input"><input id="new-server-name" type="text" placeholder="Название сервера (Sandy Shores)" required /></div>
+          <div class="auth-input"><input id="new-server-slug" type="text" placeholder="slug (sandy-shores)" required /></div>
+          <button type="submit" class="btn-primary span-2">Добавить сервер</button>
+        </form>
+      </div>
+      <p class="admin-list-title">Список серверов</p>
+      <div id="admin-servers-list"></div>
+    </div>
+  </section>
+
+  <!-- ================= ПОКУПКИ ================= -->
+  <section id="page-purchases" class="page">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+      <button class="btn-secondary" style="width:auto; padding:10px 14px;" onclick="closePurchases()">← Назад</button>
+      <h1 class="profile-title" style="margin:0;">МОИ ПОКУПКИ</h1>
+    </div>
+
+    <div id="purchases-list"></div>
+  </section>
+
+  <!-- ================= КОРЗИНА ================= -->
+  <section id="page-cart" class="page">
+    <h1 class="search-title">КОРЗИНА</h1>
+    <div id="cart-list"></div>
+    <div id="cart-summary-wrap"></div>
+  </section>
+
+</main>
+<div class="modal-overlay" id="topup-overlay" onclick="if(event.target===this) closeTopup()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h2>Пополнить баланс</h2>
+      <button class="modal-close" onclick="closeTopup()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="topup-notice" id="topup-insufficient-notice" style="display:none; margin-top:0; margin-bottom:16px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
+      На балансе недостаточно средств. Пополните баланс любым доступным способом
+    </div>
+
+    <button type="button" class="method-select-btn" id="method-select-btn" onclick="openMethodPicker()">
+      <div class="method-select-icon" id="method-select-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+      </div>
+      <div class="method-select-text">
+        <div class="method-select-title">Способ оплаты</div>
+        <div class="method-select-value" id="method-select-value">Способ оплаты не выбран</div>
+      </div>
+      <svg class="method-select-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+    </button>
+    <div class="auth-input">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+      <input id="topup-amount" type="number" min="15" placeholder="Сумма пополнения" />
+    </div>
+    <p class="amount-hint">Минимальная сумма пополнения - 15 ₽</p>
+
+    <button type="button" class="btn-primary" style="width:100%; margin-top:16px;" disabled>Оплатить</button>
+
+    <div class="topup-notice">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
+      Возможность пополнения будет позже
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="checkout-overlay" onclick="if(event.target===this) closeCheckout()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h2>Оплата заказа</h2>
+      <button class="modal-close" onclick="closeCheckout()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="checkout-body"></div>
+  </div>
+</div>
+
+<div class="modal-overlay stacked" id="method-overlay" onclick="if(event.target===this) closeMethodPicker()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h2>Способ оплаты</h2>
+      <button class="modal-close" onclick="closeMethodPicker()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="method-option" id="method-yoomoney" onclick="pickMethod('yoomoney', this)">
+      <div class="method-icon">
+        <img src="assets/yoomoney-logo.png" alt="ЮMoney" style="width:60%; height:60%; object-fit:contain;" />
+      </div>
+      <div class="method-info">
+        <div class="method-name">ЮMoney</div>
+        <div class="method-sub">Перевод с карты или кошелька</div>
+      </div>
+      <div class="method-check" style="display:none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+    </div>
+
+    <button type="button" class="btn-primary" style="width:100%; margin-top:4px;" id="confirm-method-btn" disabled onclick="confirmMethod()">Выбрать способ</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="support-overlay" onclick="if(event.target===this) closeSupport()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h2>Поддержка</h2>
+      <button class="modal-close" onclick="closeSupport()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="support-notice">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.1-3.1a4 4 0 0 1-5.4 5.4L9 18a2.12 2.12 0 0 1-3-3l6.4-6.4a4 4 0 0 1 5.4-5.4l-3.1 3.1Z"/></svg>
+      <p>В разработке..</p>
+    </div>
+    <button type="button" class="btn-secondary" style="margin-top:16px;" onclick="closeSupport()">Закрыть</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="purchase-detail-overlay" onclick="if(event.target===this) closePurchaseDetail()">
+  <div class="modal-sheet" style="max-width:480px;">
+    <div class="modal-head">
+      <h2>Покупка</h2>
+      <button class="modal-close" onclick="closePurchaseDetail()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="purchase-detail-body"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="product-overlay" onclick="if(event.target===this) closeProduct()">
+  <div class="modal-sheet" style="max-width:480px;">
+    <div class="modal-head">
+      <h2>Товар</h2>
+      <button class="modal-close" onclick="closeProduct()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="product-modal-body"></div>
+  </div>
+</div>
+<div class="cookie-banner" id="cookie-banner">
+  <p>Мы используем файлы cookie и локальное хранилище браузера для авторизации и корректной работы сайта.</p>
+  <button onclick="acceptCookies()">Понятно</button>
+</div>
+
+<nav class="bottomnav" aria-label="Основная навигация">
+  <div class="nav-wrap">
+    <div class="nav-island">
+      <div class="nav-pill" id="nav-pill"></div>
+      <button class="nav-btn active" data-page="home" onclick="goTo('home')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
+        <span>Главная</span>
+      </button>
+      <button class="nav-btn" data-page="search" onclick="goTo('search')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <span>Поиск</span>
+      </button>
+      <button class="nav-btn" data-page="cart" onclick="goTo('cart')">
+        <span class="nav-badge" id="cart-badge">0</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span>Корзина</span>
+      </button>
+      <button class="nav-btn" data-page="profile" onclick="goTo('profile')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        <span>Профиль</span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<script>
+/* =========================================================
+   1. НАСТРОЙКА SUPABASE
+   Впишите свои значения из Supabase → Project Settings → API.
+   Если оставить пустым — сайт работает на демо-данных, а вход
+   в профиль будет недоступен.
+   ========================================================= */
+let supabaseClient = null;
+
+async function initSupabase() {
+  try {
+    const res = await fetch('/api/config');
+    const cfg = await res.json();
+    if (cfg.url && cfg.anonKey && window.supabase) {
+      supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey);
+    }
+  } catch (e) {
+    console.error('Не удалось получить конфигурацию от сервера..', e);
+  }
 }
+
+async function adminFetch(url, options = {}) {
+  if (!supabaseClient) throw new Error('Нет подключения к серверу...');
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+  if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+  const res = await fetch(url, { ...options, headers });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.error || 'Ошибка запроса');
+  return json;
+}
+
+/* =========================================================
+   2. ДЕМО-ДАННЫЕ (используются, если Supabase не настроен)
+   ========================================================= */
+const mockAccounts = [
+  { id:"1", title:"Дом в Los Santos + 3 бизнеса", server:"Sandy Shores", level:187, price:8900, views:342, is_verified:true, status:"active", warehouse_items:["АК-47","Бронежилет x5"], seller:{username:"StreetKing", rating:4.9, deals_count:128} },
+  { id:"2", title:"Топовый донат-акк, все машины", server:"Rio", level:240, price:15400, views:891, is_verified:true, status:"active", warehouse_items:["Adder","Zentorno"], seller:{username:"RioTrade", rating:4.8, deals_count:76} },
+  { id:"3", title:"Стартовый аккаунт для новичка", server:"Sandy Shores", level:34, price:650, views:54, is_verified:false, status:"active", warehouse_items:["Pistol","Kevlar"], seller:{username:"NewbieShop", rating:4.4, deals_count:19} },
+  { id:"4", title:"Криминальная фракция + оружейный склад", server:"Rio", level:156, price:6200, views:217, is_verified:true, status:"active", warehouse_items:["M4A1 x3","РПГ"], seller:{username:"MafiaDeals", rating:4.7, deals_count:54} },
+  { id:"5", title:"Бизнес-империя: 5 автосалонов", server:"Sandy Shores", level:301, price:24900, views:1204, is_verified:true, status:"reserved", warehouse_items:["Autosalon x5","VIP-гараж"], seller:{username:"EmpireBR", rating:5.0, deals_count:203} },
+  { id:"6", title:"Полицейская фракция, звание майор", server:"Rio", level:210, price:5400, views:133, is_verified:false, status:"active", warehouse_items:["Служебное оружие"], seller:{username:"LawOrder", rating:4.6, deals_count:41} }
+];
+
+async function getAccounts({ query, server } = {}) {
+  if (!supabaseClient) {
+    const sold = getSoldLocal();
+    let results = mockAccounts.filter(a => (a.status === "active" || a.status === "reserved") && !sold[a.id]);
+    if (query) { const q = query.toLowerCase(); results = results.filter(a => a.title.toLowerCase().includes(q)); }
+    if (server) results = results.filter(a => a.server === server);
+    return results;
+  }
+  let q = supabaseClient.from("accounts")
+    .select("*, server:servers(id, name), seller:profiles!accounts_seller_id_fkey(username, rating, deals_count)")
+    .in("status", ["active", "reserved"])
+    .order("created_at", { ascending: false });
+  if (query) q = q.ilike("title", `%${query}%`);
+  const { data, error } = await q;
+  if (error) { console.error(error); return []; }
+  let mapped = (data || []).map(a => ({
+    ...a,
+    server: a.server?.name || "—",
+    warehouse_items: a.tags || []
+  }));
+  if (server) mapped = mapped.filter(a => a.server === server);
+  return mapped;
+}
+
+async function getServers() {
+  if (!supabaseClient) {
+    return [...new Set(mockAccounts.map(a => a.server))].map(name => ({ name }));
+  }
+  const { data, error } = await supabaseClient.from("servers").select("*").order("sort_order");
+  if (error) { console.error(error); return []; }
+  return data || [];
+}
+
+/* =========================================================
+   3. РЕНДЕР КАРТОЧЕК
+   ========================================================= */
+const fmt = n => new Intl.NumberFormat("ru-RU").format(n);
+const fmtCompact = n => new Intl.NumberFormat("ru-RU", { notation:"compact" }).format(n);
+const productRegistry = {};
+
+function cardHTML(a) {
+  productRegistry[a.id] = a;
+  const reserved = a.status === "reserved";
+  const items = (a.warehouse_items || []).slice(0,2).map(i => `<span>${i}</span>`).join("");
+  return `
+  <article class="card" onclick="openProduct('${a.id}')">
+    <div class="card-media" ${a.photos && a.photos.length ? `style="background-image:url('${a.photos[0]}'); background-size:cover; background-position:center;"` : ""}>
+      ${a.photos && a.photos.length ? "" : `<span>${a.server}</span>`}
+      <div class="pill-views">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+        ${fmtCompact(a.views || 0)}
+      </div>
+      ${a.is_verified ? `<div class="pill-verified"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>Проверен</div>` : ""}
+      ${reserved ? `<div class="reserved-overlay"><span>В резерве</span></div>` : ""}
+    </div>
+    <div class="card-body">
+      <div class="card-meta"><span class="lvl">LVL ${a.level}</span><span>${a.server}</span></div>
+      <h3 class="card-title">${a.title}</h3>
+      <div class="card-tags">${items}</div>
+      <div class="card-footer">
+        <div class="card-rating">
+          <svg width="12" height="12" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          ${(a.seller && a.seller.rating || 0).toFixed(1)}
+          <span class="seller">· ${(a.seller && a.seller.username) || "продавец"}</span>
+        </div>
+        <div class="card-price">${fmt(a.price)} ₽</div>
+      </div>
+    </div>
+  </article>`;
+}
+
+function skeletons(n) {
+  return Array.from({length:n}).map(() => `<div class="skeleton"></div>`).join("");
+}
+
+/* =========================================================
+   ТОВАР — детальная карточка + корзина
+   ========================================================= */
+function openProduct(id) {
+  const a = productRegistry[id];
+  if (!a) return;
+  renderProductModal(a);
+  document.getElementById("product-overlay").classList.add("active");
+}
+function closeProduct() {
+  document.getElementById("product-overlay").classList.remove("active");
+}
+
+function renderProductModal(a) {
+  const photos = a.photos && a.photos.length ? a.photos : [];
+  const gallery = photos.length
+    ? `<div class="product-gallery">${photos.map(p => `<img src="${p}" onerror="this.remove();" />`).join("")}</div>`
+    : `<div class="product-gallery-empty">${a.server}</div>`;
+  const tags = (a.warehouse_items || []).map(i => `<span>${i}</span>`).join("");
+  const desc = a.description && a.description.trim() ? a.description : "Продавец пока не добавил подробное описание этого товара.";
+  const inCart = isInCart(a.id);
+
+  document.getElementById("product-modal-body").innerHTML = `
+    ${gallery}
+    <div class="product-meta-row">
+      <span class="lvl">LVL ${a.level}</span>
+      <span>${a.server}</span>
+      ${a.is_verified ? `<span style="color:var(--success);">· Проверенный продавец</span>` : ""}
+    </div>
+    <h1 class="product-detail-title">${a.title}</h1>
+    <div class="product-tags">${tags}</div>
+    <p class="product-desc">${desc}</p>
+    <div class="product-price-row">
+      <div class="product-price">${fmt(a.price)} ₽</div>
+    </div>
+    <button type="button" class="btn-primary btn-cart ${inCart ? "in-cart" : ""}" id="product-cart-btn" onclick="toggleCart('${a.id}')">
+      ${inCart
+        ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> В корзине`
+        : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> Добавить в корзину`}
+    </button>
+  `;
+}
+
+/* --- Продажи / резервирование товара --- */
+function getSoldLocal() {
+  try { return JSON.parse(localStorage.getItem("soldAccounts") || "{}"); } catch (e) { return {}; }
+}
+async function reserveAccount(id) {
+  if (supabaseClient) {
+    try {
+      const { data, error } = await supabaseClient
+        .from("accounts")
+        .update({ status: "sold" })
+        .eq("id", id)
+        .eq("status", "active")
+        .select("id");
+      if (error) {
+        console.error("Ошибка резервирования товара:", error);
+        return { ok: false, systemError: true, message: error.message };
+      }
+      return { ok: !!(data && data.length), systemError: false };
+    } catch (e) {
+      console.error("Ошибка резервирования товара:", e);
+      return { ok: false, systemError: true, message: e.message };
+    }
+  } else {
+    const sold = getSoldLocal();
+    if (sold[id]) return false;
+    sold[id] = true;
+    try { localStorage.setItem("soldAccounts", JSON.stringify(sold)); } catch (e) {}
+    return true;
+  }
+}
+async function pruneSoldFromCart() {
+  const cart = getCart();
+  const ids = Object.keys(cart);
+  if (!ids.length) return;
+  if (!supabaseClient) {
+    const sold = getSoldLocal();
+    let changed = false;
+    ids.forEach(id => { if (sold[id]) { delete cart[id]; changed = true; } });
+    if (changed) saveCart(cart);
+    return;
+  }
+  try {
+    const { data, error } = await supabaseClient.from("accounts").select("id,status").in("id", ids);
+    if (error) { console.error(error); return; }
+    const stillActive = new Set((data || []).filter(a => a.status === "active" || a.status === "reserved").map(a => a.id));
+    let changed = false;
+    ids.forEach(id => { if (!stillActive.has(id)) { delete cart[id]; changed = true; } });
+    if (changed) saveCart(cart);
+  } catch (e) { console.error(e); }
+}
+
+/* --- Корзина --- */
+function getCart() {
+  try { return JSON.parse(localStorage.getItem("cart") || "{}"); } catch (e) { return {}; }
+}
+function saveCart(cart) {
+  try { localStorage.setItem("cart", JSON.stringify(cart)); } catch (e) {}
+  updateCartBadge();
+}
+function isInCart(id) {
+  return !!getCart()[id];
+}
+function toggleCart(id) {
+  const a = productRegistry[id];
+  if (!a) return;
+  const cart = getCart();
+  if (cart[id]) delete cart[id];
+  else cart[id] = { id: a.id, title: a.title, server: a.server, price: a.price, photos: a.photos || [], description: a.description || "", secret_info: a.secret_info || "" };
+  saveCart(cart);
+  renderProductModal(a);
+  if (document.getElementById("page-cart").classList.contains("active")) renderCartPage();
+}
+function removeFromCart(id) {
+  const cart = getCart();
+  delete cart[id];
+  saveCart(cart);
+  renderCartPage();
+}
+function updateCartBadge() {
+  const count = Object.keys(getCart()).length;
+  const badge = document.getElementById("cart-badge");
+  if (!badge) return;
+  badge.textContent = count > 9 ? "9+" : String(count);
+  badge.classList.toggle("show", count > 0);
+}
+function cartRowHTML(item) {
+  return `
+  <div class="cart-row">
+    <div class="cart-thumb"></div>
+    <div class="cart-info">
+      <div class="cart-title">${item.title}</div>
+      <div class="cart-meta">${item.server}</div>
+    </div>
+    <div class="cart-right">
+      <div class="cart-price">${fmt(item.price)} ₽</div>
+      <button class="cart-remove" onclick="removeFromCart('${item.id}')">Убрать</button>
+    </div>
+  </div>`;
+}
+async function renderCartPage() {
+  await pruneSoldFromCart();
+  const cart = getCart();
+  const items = Object.values(cart);
+  const listEl = document.getElementById("cart-list");
+  const summaryEl = document.getElementById("cart-summary-wrap");
+  if (!items.length) {
+    listEl.innerHTML = `<div class="empty">Ваша корзина пуста.</div>`;
+    summaryEl.innerHTML = "";
+    return;
+  }
+  listEl.innerHTML = items.map(cartRowHTML).join("");
+  const total = items.reduce((sum, i) => sum + (i.price || 0), 0);
+  summaryEl.innerHTML = `
+    <div class="cart-summary">
+      <div class="cart-summary-row"><span>Товаров в корзине</span><b>${items.length}</b></div>
+      <div class="cart-summary-row"><span>Итого</span><b>${fmt(total)} ₽</b></div>
+      <button type="button" class="btn-primary" style="width:100%;" onclick="openCheckout()">Перейти к оплате</button>
+    </div>`;
+}
+/* =========================================================
+   4. СТРАНИЦА «ГЛАВНАЯ»
+   ========================================================= */
+async function loadHome() {
+  const grid = document.getElementById("home-grid");
+  grid.innerHTML = skeletons(4);
+  const servers = await getServers();
+  renderServerRail(servers);
+  const accounts = await getAccounts();
+  renderHomeGrid(accounts);
+}
+
+function renderServerRail(servers) {
+  const rail = document.getElementById("server-rail");
+  rail.innerHTML = `<button class="chip active" onclick="filterByServer('', this)">Все сервера</button>` +
+    servers.map(s => `<button class="chip" onclick="filterByServer('${s.name}', this)">${s.name}</button>`).join("");
+}
+
+async function filterByServer(name, btn) {
+  document.querySelectorAll("#server-rail .chip").forEach(c => c.classList.remove("active"));
+  btn.classList.add("active");
+  const grid = document.getElementById("home-grid");
+  grid.innerHTML = skeletons(4);
+  const accounts = await getAccounts({ server: name || undefined });
+  renderHomeGrid(accounts);
+}
+
+function renderHomeGrid(accounts) {
+  const grid = document.getElementById("home-grid");
+  grid.innerHTML = accounts.length
+    ? accounts.map(cardHTML).join("")
+    : `<div class="empty" style="grid-column:1/-1;">Пока нет активных объявлений.</div>`;
+}
+
+/* =========================================================
+   5. СТРАНИЦА «ПОИСК»
+   ========================================================= */
+let searchTimer = null;
+document.getElementById("search-input").addEventListener("input", (e) => {
+  document.getElementById("search-clear").style.display = e.target.value ? "flex" : "none";
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => runSearch(e.target.value), 300);
+});
+function clearSearch() {
+  const input = document.getElementById("search-input");
+  input.value = "";
+  document.getElementById("search-clear").style.display = "none";
+  runSearch("");
+}
+async function runSearch(query) {
+  const grid = document.getElementById("search-grid");
+  grid.innerHTML = skeletons(4);
+  const results = await getAccounts({ query });
+  grid.innerHTML = results.length
+    ? results.map(cardHTML).join("")
+    : `<div class="empty" style="grid-column:1/-1;">Ничего не найдено${query ? ` по запросу «${query}»` : ""}.</div>`;
+}
+
+/* =========================================================
+   6. СТРАНИЦА «ПРОФИЛЬ» (Supabase Auth — magic link)
+   ========================================================= */
+async function initProfile() {
+  if (!supabaseClient) {
+    document.getElementById("profile-loading").style.display = "none";
+    document.getElementById("profile-signed-out").style.display = "block";
+    return;
+  }
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  document.getElementById("profile-loading").style.display = "none";
+  if (user) showSignedIn(user); else showSignedOut();
+
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    if (session?.user) showSignedIn(session.user); else showSignedOut();
+  });
+}
+
+async function showSignedIn(user) {
+  document.getElementById("profile-signed-out").style.display = "none";
+  document.getElementById("profile-signed-in").style.display = "block";
+
+  let profile = null;
+  if (supabaseClient) {
+    const { data } = await supabaseClient.from("profiles").select("*").eq("id", user.id).single();
+    profile = data;
+  }
+  const username = (profile && profile.username) || user.email;
+  document.getElementById("profile-avatar").textContent = username.slice(0,1).toUpperCase();
+  document.getElementById("profile-username").textContent = username;
+  document.getElementById("profile-rating").textContent = (profile?.rating ?? 0).toFixed(1);
+  document.getElementById("profile-deals").textContent = `· ${profile?.deals_count ?? 0} сделок`;
+  document.getElementById("profile-balance").textContent = `${fmt(profile?.balance ?? 0)} ₽`;
+
+  const isAdmin = profile?.role === "admin";
+  document.getElementById("profile-status").textContent = isAdmin ? "Администратор" : "Пользователь";
+  document.getElementById("admin-panel-btn").style.display = isAdmin ? "flex" : "none";
+  document.getElementById("profile-status-box").style.display = isAdmin ? "block" : "none";
+  document.querySelector(".stat-grid").classList.toggle("single-col", !isAdmin);
+}
+
+let pendingMethod = null;
+let selectedMethod = null;
+
+const paymentMethods = {
+  yoomoney: {
+    name: "ЮMoney",
+    iconHTML: `<img src="assets/yoomoney-logo.png" alt="ЮMoney" style="width:100%; height:100%; object-fit:cover;" />`
+  }
+};
+
+/* =========================================================
+   ПОКУПКИ
+   ========================================================= */
+function getPurchasesLocal() {
+  try { return JSON.parse(localStorage.getItem("purchases") || "[]"); } catch (e) { return []; }
+}
+function savePurchasesLocal(list) {
+  try { localStorage.setItem("purchases", JSON.stringify(list)); } catch (e) {}
+}
+async function addPurchaseRecords(items) {
+  if (supabaseClient) {
+    try {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      const rows = items.map(item => ({
+        buyer_id: user?.id || null,
+        account_id: item.id,
+        price: item.price
+      }));
+      const { error } = await supabaseClient.from("purchases").insert(rows);
+      if (error) console.error("Ошибка записи покупки в purchases:", error);
+    } catch (e) {
+      console.error("Ошибка записи покупки:", e);
+    }
+    return;
+  }
+  const list = getPurchasesLocal();
+  const now = new Date().toISOString();
+  items.forEach(item => {
+    list.unshift({
+      id: "pu_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
+      title: item.title,
+      server: item.server,
+      price: item.price,
+      photos: item.photos || [],
+      description: item.description || "",
+      secret_info: item.secret_info || "",
+      status: "completed",
+      date: now
+    });
+  });
+  savePurchasesLocal(list);
+}
+
+const purchaseRegistry = {};
+
+async function getPurchases() {
+  if (!supabaseClient) {
+    return getPurchasesLocal();
+  }
+  try {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    let q = supabaseClient
+      .from("purchases")
+      .select("*, account:accounts(title, server:servers(name), photos, description, secret_info)")
+      .order("created_at", { ascending: false });
+    q = user ? q.eq("buyer_id", user.id) : q.is("buyer_id", null);
+    const { data, error } = await q;
+    if (error) { console.error("Ошибка чтения purchases:", error); return []; }
+    return (data || []).map(p => ({
+      id: p.id,
+      title: p.account?.title || "Аккаунт",
+      server: p.account?.server?.name || "—",
+      price: p.price,
+      photos: p.account?.photos || [],
+      description: p.account?.description || "",
+      secret_info: p.account?.secret_info || "",
+      status: "completed",
+      date: p.created_at
+    }));
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
+}
+
+function purchaseRowHTML(p) {
+  purchaseRegistry[p.id] = p;
+  const dateStr = p.date ? new Date(p.date).toLocaleDateString("ru-RU") : "";
+  return `
+  <div class="purchase-row" onclick="openPurchaseDetail('${p.id}')">
+    <div class="purchase-thumb">${(p.server || "?").slice(0,1)}</div>
+    <div class="purchase-info">
+      <div class="purchase-title">${p.title}</div>
+      <div class="purchase-meta"><span>${p.server}</span>${dateStr ? `<span>· ${dateStr}</span>` : ""}</div>
+    </div>
+    <div class="purchase-right">
+      <div class="purchase-price">${fmt(p.price)} ₽</div>
+      <span class="status-badge completed">Завершен</span>
+    </div>
+  </div>`;
+}
+
+async function renderPurchasesList() {
+  const listEl = document.getElementById("purchases-list");
+  listEl.innerHTML = '<div class="empty">Загрузка...</div>';
+  const items = await getPurchases();
+  listEl.innerHTML = items.length
+    ? items.map(purchaseRowHTML).join("")
+    : `<div class="empty">У вас пока нет покупок.</div>`;
+}
+
+function openPurchases() {
+  document.getElementById("page-profile").classList.remove("active");
+  document.getElementById("page-purchases").classList.add("active");
+  renderPurchasesList();
+}
+function closePurchases() {
+  document.getElementById("page-purchases").classList.remove("active");
+  document.getElementById("page-profile").classList.add("active");
+}
+
+function openPurchaseDetail(id) {
+  const p = purchaseRegistry[id];
+  if (!p) return;
+  const photos = p.photos && p.photos.length ? p.photos : [];
+  const gallery = photos.length
+    ? `<div class="product-gallery">${photos.map(ph => `<img src="${ph}" onerror="this.remove();" />`).join("")}</div>`
+    : `<div class="product-gallery-empty">${p.server}</div>`;
+  document.getElementById("purchase-detail-body").innerHTML = `
+    ${gallery}
+    <h1 class="product-detail-title">${p.title}</h1>
+    <p class="product-desc">${p.description && p.description.trim() ? p.description : "Описание отсутствует."}</p>
+    <div class="stat-box" style="margin-top:4px;">
+      <div class="stat-label">Данные товара</div>
+      <div class="stat-value text" style="white-space:pre-line; font-size:13.5px; line-height:1.6;">${p.secret_info && p.secret_info.trim() ? p.secret_info : "Продавец не указал данные."}</div>
+    </div>
+  `;
+  document.getElementById("purchase-detail-overlay").classList.add("active");
+}
+function closePurchaseDetail() {
+  document.getElementById("purchase-detail-overlay").classList.remove("active");
+}
+
+function openTopup() {
+  document.getElementById("topup-overlay").classList.add("active");
+}
+function closeTopup() {
+  document.getElementById("topup-overlay").classList.remove("active");
+  document.getElementById("topup-insufficient-notice").style.display = "none";
+}
+
+function getUserBalance() {
+  const el = document.getElementById("profile-balance");
+  if (!el) return 0;
+  const digits = el.textContent.replace(/[^\d]/g, "");
+  return Number(digits) || 0;
+}
+
+function openCheckout() {
+  const cart = getCart();
+  const items = Object.values(cart);
+  if (!items.length) return;
+  const total = items.reduce((sum, i) => sum + (i.price || 0), 0);
+  const balance = getUserBalance();
+
+  if (balance >= total) {
+    document.getElementById("checkout-body").innerHTML = `
+      <p style="font-size:14px; color:var(--text-muted); margin:0 0 16px;">Оплата с баланса аккаунта.</p>
+      <div class="stat-box" style="margin-bottom:16px;">
+        <div class="stat-label">Баланс</div>
+        <div class="stat-value">${fmt(balance)} ₽</div>
+      </div>
+      <p style="display:flex; align-items:center; gap:6px; font-size:13.5px; color:var(--success); margin:0 0 18px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+        Средств хватает
+      </p>
+      <button type="button" class="btn-primary" style="width:100%;" onclick="payFromBalance(${total})">Оплатить (${fmt(total)} ₽)</button>
+    `;
+    document.getElementById("checkout-overlay").classList.add("active");
+  } else {
+    document.getElementById("topup-insufficient-notice").style.display = "flex";
+    openTopup();
+  }
+}
+function closeCheckout() {
+  document.getElementById("checkout-overlay").classList.remove("active");
+}
+async function payFromBalance(total) {
+  const cart = getCart();
+  const items = Object.values(cart);
+  if (!items.length) return;
+
+  document.getElementById("checkout-body").innerHTML = `
+    <div style="display:flex; flex-direction:column; align-items:center; gap:14px; padding:24px 0 12px;">
+      <div style="width:36px; height:36px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--accent); animation:spin .8s linear infinite;"></div>
+      <p style="font-size:14px; color:var(--text-muted); margin:0;">Оформление заказа...</p>
+    </div>
+  `;
+
+  const delay = 1200 + Math.random() * 1800;
+  await new Promise(res => setTimeout(res, delay));
+
+  // Баланс уже проверен и одобрен (openCheckout). Теперь атомарно бронируем каждый товар:
+  const purchased = [];
+  const unavailable = [];
+  let systemErrorMsg = null;
+  for (const item of items) {
+    const res = await reserveAccount(item.id);
+    if (res.ok) {
+      purchased.push(item);
+    } else {
+      unavailable.push(item);
+      if (res.systemError) systemErrorMsg = res.message || "неизвестная ошибка";
+    }
+  }
+  // Убираем из корзины только реально распроданные позиции (не системные ошибки)
+  const trulyUnavailable = unavailable.filter(() => !systemErrorMsg);
+  if (trulyUnavailable.length) {
+    const cartNow = getCart();
+    trulyUnavailable.forEach(item => delete cartNow[item.id]);
+    saveCart(cartNow);
+  }
+
+  if (!purchased.length) {
+    const reasonText = systemErrorMsg
+      ? `Техническая ошибка сервера. Попробуйте позже. (${systemErrorMsg})`
+      : "Товара нет в наличии";
+    document.getElementById("checkout-body").innerHTML = `
+      <div style="display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px; padding:8px 0 4px;">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--danger);"><circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
+        <h2 style="font-family:var(--font-display); font-size:22px; letter-spacing:.02em; color:#fff; margin:6px 0 0;">Ошибка оформления.</h2>
+        <p style="font-size:13.5px; color:var(--text-muted); margin:0 0 14px; max-width:28ch;">${reasonText}</p>
+        <button type="button" class="btn-secondary" style="width:100%;" onclick="closeCheckout()">Закрыть</button>
+      </div>
+    `;
+    if (!systemErrorMsg && document.getElementById("page-cart").classList.contains("active")) renderCartPage();
+    return;
+  }
+  await addPurchaseRecords(purchased);
+  const purchasedTotal = purchased.reduce((s, i) => s + (i.price || 0), 0);
+
+  if (supabaseClient) {
+    try {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (user) {
+        const { data: prof } = await supabaseClient.from("profiles").select("balance").eq("id", user.id).single();
+        const newBalance = Math.max((prof?.balance ?? 0) - purchasedTotal, 0);
+        const { error: balErr } = await supabaseClient.from("profiles").update({ balance: newBalance }).eq("id", user.id);
+        if (balErr) console.error("Ошибка списания баланса:", balErr);
+      }
+    } catch (e) {
+      console.error("Ошибка списания баланса:", e);
+    }
+  }
+
+  const balanceEl = document.getElementById("profile-balance");
+  if (balanceEl) {
+    const current = getUserBalance();
+    balanceEl.textContent = `${fmt(Math.max(current - purchasedTotal, 0))} ₽`;
+  }
+  const cartAfter = getCart();
+  purchased.forEach(item => delete cartAfter[item.id]);
+  saveCart(cartAfter);
+  if (document.getElementById("page-cart").classList.contains("active")) renderCartPage();
+
+  const failNote = unavailable.length
+    ? `<p style="font-size:12.5px; color:var(--danger); margin:0 0 14px;">Товар(ы) «${unavailable.map(i => i.title).join(", ")}» уже куплены и удалены из корзины.</p>`
+    : "";
+
+  document.getElementById("checkout-body").innerHTML = `
+    <div style="display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px; padding:8px 0 4px;">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--success);"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+      <h2 style="font-family:var(--font-display); font-size:22px; letter-spacing:.02em; color:#fff; margin:6px 0 0;">Товар оформлен!</h2>
+      <p style="font-size:13.5px; color:var(--text-muted); margin:0 0 14px; max-width:28ch;">Содержимое товаров проверьте в разделе Покупок профиля</p>
+      ${failNote}
+      <button type="button" class="btn-primary" style="width:100%;" onclick="goToPurchasesFromCheckout()">Перейти в покупки</button>
+    </div>
+  `;
+}
+function goToPurchasesFromCheckout() {
+  closeCheckout();
+  goTo("profile");
+  openPurchases();
+}
+function openSupport() {
+  document.getElementById("support-overlay").classList.add("active");
+}
+function closeSupport() {
+  document.getElementById("support-overlay").classList.remove("active");
+}
+
+function openMethodPicker() {
+  pendingMethod = selectedMethod;
+  document.querySelectorAll("#method-overlay .method-option").forEach(el => {
+    const isSel = el.id === `method-${pendingMethod}`;
+    el.classList.toggle("selected", isSel);
+    el.querySelector(".method-check").style.display = isSel ? "flex" : "none";
+  });
+  document.getElementById("confirm-method-btn").disabled = !pendingMethod;
+  document.getElementById("method-overlay").classList.add("active");
+}
+function closeMethodPicker() {
+  document.getElementById("method-overlay").classList.remove("active");
+}
+function pickMethod(id, el) {
+  pendingMethod = id;
+  document.querySelectorAll("#method-overlay .method-option").forEach(opt => {
+    const isSel = opt === el;
+    opt.classList.toggle("selected", isSel);
+    opt.querySelector(".method-check").style.display = isSel ? "flex" : "none";
+  });
+  document.getElementById("confirm-method-btn").disabled = false;
+}
+function confirmMethod() {
+  if (!pendingMethod) return;
+  selectedMethod = pendingMethod;
+  const m = paymentMethods[selectedMethod];
+  const icon = document.getElementById("method-select-icon");
+  icon.className = "method-select-icon filled";
+  icon.innerHTML = m.iconHTML;
+  const valueEl = document.getElementById("method-select-value");
+  valueEl.textContent = m.name;
+  valueEl.classList.add("chosen");
+  document.getElementById("method-select-btn").classList.add("has-selection");
+  closeMethodPicker();
+}
+
+function openAdmin() {
+  document.getElementById("page-profile").classList.remove("active");
+  document.getElementById("page-admin").classList.add("active");
+  loadAdminServers();
+  loadAdminAccounts();
+}
+function closeAdmin() {
+  document.getElementById("page-admin").classList.remove("active");
+  document.getElementById("page-profile").classList.add("active");
+}
+function switchAdminTab(tab, btn) {
+  document.querySelectorAll("#page-admin .admin-tab").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById("admin-tab-accounts").classList.toggle("active", tab === "accounts");
+  document.getElementById("admin-tab-servers").classList.toggle("active", tab === "servers");
+}
+/* --- Сервера (категории) --- */
+async function loadAdminServers() {
+  const list = document.getElementById("admin-servers-list");
+  list.innerHTML = '<div class="empty">Загрузка...</div>';
+  try {
+    const servers = await adminFetch("/api/admin/servers");
+    list.innerHTML = servers.length ? servers.map(s => `
+      <div class="admin-row">
+        <div class="admin-row-info"><b>${s.name}</b><span class="meta font-mono">${s.slug}</span></div>
+        <div class="admin-row-actions">
+          <button onclick='editServerPrompt(${JSON.stringify(s)})'>Изменить</button>
+          <button class="danger" onclick="deleteServer('${s.id}')">Удалить</button>
+        </div>
+      </div>`).join("") : '<div class="empty">Серверов пока нет.</div>';
+  } catch (e) {
+    list.innerHTML = `<div class="empty">Ошибка: ${e.message}</div>`;
+  }
+}
+async function addServer(e) {
+  e.preventDefault();
+  const name = document.getElementById("new-server-name").value.trim();
+  const slug = document.getElementById("new-server-slug").value.trim();
+  if (!name || !slug) return;
+  try {
+    await adminFetch("/api/admin/servers", { method: "POST", body: JSON.stringify({ name, slug, sort_order: 0 }) });
+    document.getElementById("new-server-name").value = "";
+    document.getElementById("new-server-slug").value = "";
+    loadAdminServers();
+    loadHome();
+  } catch (e) { alert(e.message); }
+}
+function editServerPrompt(s) {
+  const newName = prompt("Название сервера", s.name);
+  if (newName === null) return;
+  const newSlug = prompt("Slug (латиницей)", s.slug);
+  if (newSlug === null) return;
+  updateServer(s.id, newName, newSlug, s.sort_order);
+}
+async function updateServer(id, name, slug, sort_order) {
+  try {
+    await adminFetch("/api/admin/servers", { method: "PUT", body: JSON.stringify({ id, name, slug, sort_order }) });
+    loadAdminServers();
+    loadHome();
+  } catch (e) { alert(e.message); }
+}
+async function deleteServer(id) {
+  if (!confirm("Удалить сервер? Связанные товары останутся без категории.")) return;
+  try {
+    await adminFetch("/api/admin/servers", { method: "DELETE", body: JSON.stringify({ id }) });
+    loadAdminServers();
+    loadHome();
+  } catch (e) { alert(e.message); }
+}
+
+const MAX_PHOTO_ROWS = 10;
+
+function getPhotoUrls() {
+  return Array.from(document.querySelectorAll(".photo-url-input"))
+    .map(i => i.value.trim())
+    .filter(Boolean);
+}
+function addPhotoRow() {
+  const rows = document.querySelectorAll("#photo-inputs-wrap .photo-input-row");
+  if (rows.length >= MAX_PHOTO_ROWS) return;
+  const wrap = document.getElementById("photo-inputs-wrap");
+  const row = document.createElement("div");
+  row.className = "photo-input-row";
+  row.setAttribute("data-row", "");
+  row.innerHTML = `
+    <div class="auth-input" style="flex:1;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+      <input type="text" class="photo-url-input" placeholder="Ссылка на фото (https://...)" oninput="renderPhotoPreview()" />
+    </div>
+    <button type="button" class="photo-remove-btn" onclick="removePhotoRow(this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>`;
+  wrap.appendChild(row);
+  updateAddPhotoBtn();
+}
+function removePhotoRow(btn) {
+  btn.closest(".photo-input-row").remove();
+  renderPhotoPreview();
+  updateAddPhotoBtn();
+}
+function updateAddPhotoBtn() {
+  const rows = document.querySelectorAll("#photo-inputs-wrap .photo-input-row");
+  const btn = document.getElementById("add-photo-btn");
+  if (btn) btn.style.display = rows.length >= MAX_PHOTO_ROWS ? "none" : "block";
+}
+function resetPhotoRows() {
+  const wrap = document.getElementById("photo-inputs-wrap");
+  wrap.innerHTML = `
+    <div class="photo-input-row" data-row>
+      <div class="auth-input" style="flex:1;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+        <input type="text" class="photo-url-input" placeholder="Ссылка на фото (https://...)" oninput="renderPhotoPreview()" />
+      </div>
+    </div>`;
+  updateAddPhotoBtn();
+  renderPhotoPreview();
+}
+function renderPhotoPreview() {
+  const urls = getPhotoUrls();
+  const box = document.getElementById("photo-preview");
+  box.innerHTML = urls.map(u => `
+    <div class="photo-thumb">
+      <img src="${u}" onerror="this.parentElement.classList.add('broken'); this.remove();" />
+    </div>`).join("");
+}
+
+/* --- Товары --- */
+async function populateAdminServerSelect() {
+  const select = document.getElementById("new-acc-server");
+  const servers = await getServers();
+  select.innerHTML = servers.map(s => `<option value="${s.id || ""}">${s.name}</option>`).join("");
+}
+async function loadAdminAccounts() {
+  await populateAdminServerSelect();
+  const list = document.getElementById("admin-accounts-list");
+  list.innerHTML = '<div class="empty">Загрузка...</div>';
+  try {
+    const accounts = await adminFetch("/api/admin/accounts");
+    list.innerHTML = accounts.length ? accounts.map(a => `
+      <div class="admin-row">
+        <div class="admin-row-info"><b>${a.title}</b><span class="meta">${(a.server && a.server.name) || "—"} · LVL ${a.level} · ${fmt(a.price)} ₽ · ${a.status}</span></div>
+        <div class="admin-row-actions">
+          <button class="danger" onclick="deleteAccount('${a.id}')">Удалить</button>
+        </div>
+      </div>`).join("") : '<div class="empty">Товаров пока нет.</div>';
+  } catch (e) {
+    list.innerHTML = `<div class="empty">Ошибка: ${e.message}</div>`;
+  }
+}
+async function addAccount(e) {
+  e.preventDefault();
+  const title = document.getElementById("new-acc-title").value.trim();
+  const server_id = document.getElementById("new-acc-server").value || null;
+  const level = Number(document.getElementById("new-acc-level").value) || 1;
+  const price = Number(document.getElementById("new-acc-price").value) || 0;
+  const tags = document.getElementById("new-acc-tags").value.split(",").map(t => t.trim()).filter(Boolean);
+  const is_verified = document.getElementById("new-acc-verified").checked;
+  const description = document.getElementById("new-acc-description").value.trim();
+  const secret_info = document.getElementById("new-acc-secret").value.trim();
+  const photos = getPhotoUrls();
+  try {
+    await adminFetch("/api/admin/accounts", { method: "POST", body: JSON.stringify({ title, server_id, level, price, tags, is_verified, description, secret_info, photos, status: "active" }) });
+    document.getElementById("new-acc-title").value = "";
+    document.getElementById("new-acc-price").value = "";
+    document.getElementById("new-acc-tags").value = "";
+    document.getElementById("new-acc-verified").checked = false;
+    document.getElementById("new-acc-description").value = "";
+    document.getElementById("new-acc-secret").value = "";
+    resetPhotoRows();
+    loadAdminAccounts();
+    loadHome();
+  } catch (e) { alert(e.message); }
+}
+async function deleteAccount(id) {
+  if (!confirm("Удалить товар?")) return;
+  try {
+    await adminFetch("/api/admin/accounts", { method: "DELETE", body: JSON.stringify({ id }) });
+    loadAdminAccounts();
+    loadHome();
+  } catch (e) { alert(e.message); }
+}
+
+function showSignedOut() {
+  document.getElementById("profile-signed-in").style.display = "none";
+  document.getElementById("profile-signed-out").style.display = "block";
+  document.getElementById("signin-form").style.display = "flex";
+  document.getElementById("signin-sent").style.display = "none";
+}
+
+const AUTH_EMAIL_DOMAIN = "blackmarket-auth.com";
+let authMode = "login";
+
+function switchAuthMode(mode, btn) {
+  authMode = mode;
+  document.querySelectorAll("#page-profile .admin-tab").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById("auth-title").textContent = mode === "login" ? "ВХОД В АККАУНТ" : "РЕГИСТРАЦИЯ";
+  document.getElementById("auth-sub").textContent = mode === "login" ? "Войдите под своим ником и паролем." : "Придумайте ник и пароль.";
+  document.getElementById("auth-submit-btn").textContent = mode === "login" ? "Войти" : "Зарегистрироваться";
+  document.getElementById("consent-action").textContent = mode === "login" ? "Войти" : "Зарегистрироваться";
+  document.getElementById("signin-error").style.display = "none";
+}
+
+function usernameToEmail(username) {
+  return `${username.toLowerCase()}@${AUTH_EMAIL_DOMAIN}`;
+}
+
+async function handleAuthSubmit(e) {
+  e.preventDefault();
+  const username = document.getElementById("auth-username").value.trim();
+  const password = document.getElementById("auth-password").value;
+  const errEl = document.getElementById("signin-error");
+  errEl.style.display = "none";
+
+  if (!supabaseClient) {
+    errEl.textContent = "Нет подключения к серверу авторизации.";
+    errEl.style.display = "block";
+    return;
+  }
+
+  const email = usernameToEmail(username);
+
+  if (authMode === "register") {
+    const { error } = await supabaseClient.auth.signUp({
+      email, password,
+      options: { data: { username } }
+    });
+    if (error) {
+      errEl.textContent = error.message.includes("already registered") ? "Такой ник уже занят." : error.message;
+      errEl.style.display = "block";
+      return;
+    }
+  } else {
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) {
+      errEl.textContent = "Неверный ник или пароль.";
+      errEl.style.display = "block";
+      return;
+    }
+  }
+}
+
+async function handleSignOut() {
+  if (supabaseClient) await supabaseClient.auth.signOut();
+  showSignedOut();
+}
+
+/* =========================================================
+   7. НИЖНЯЯ НАВИГАЦИЯ + КАТАЮЩИЙСЯ ШАРИК
+   ========================================================= */
+const pageOrder = ["home", "search", "cart", "profile"];
+let currentIndex = 0;
+let ballRotation = 0;
+
+function goTo(page) {
+  const newIndex = pageOrder.indexOf(page);
+  if (newIndex === -1) return;
+
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.getElementById(`page-${page}`).classList.add("active");
+
+  document.querySelectorAll(".nav-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.page === page);
+  });
+
+  document.getElementById("nav-pill").style.transform = `translateX(${newIndex * 100}%)`;
+
+  currentIndex = newIndex;
+
+  if (page === "home" && !window.__homeLoaded) { window.__homeLoaded = true; loadHome(); }
+  if (page === "search" && !window.__searchInit) { window.__searchInit = true; runSearch(""); }
+  if (page === "profile" && !window.__profileInit) { window.__profileInit = true; initProfile(); }
+  if (page === "cart") { renderCartPage(); }
+}
+
+/* cookie banner */
+function acceptCookies() {
+  try { localStorage.setItem("cookieConsent", "1"); } catch (e) {}
+  document.getElementById("cookie-banner").classList.remove("active");
+}
+function initCookieBanner() {
+  let accepted = false;
+  try { accepted = localStorage.getItem("cookieConsent") === "1"; } catch (e) {}
+  if (!accepted) document.getElementById("cookie-banner").classList.add("active");
+}
+
+/* инициализация */
+(async () => {
+  await initSupabase();
+  await loadHome();
+  window.__homeLoaded = true;
+  initCookieBanner();
+  updateCartBadge();
+})();
+</script>
+</body>
+</html>
