@@ -12,9 +12,9 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { title, server_id, level, price, tags, is_verified, status } = req.body;
+    const { title, server_id, level, price, tags, is_verified, status, photos, description, secret_info } = req.body;
     const { data, error } = await supabaseAdmin.from('accounts')
-      .insert({ title, server_id, level, price, tags, is_verified, status: status || 'active' })
+      .insert({ title, server_id, level, price, tags, is_verified, status: status || 'active', photos, description, secret_info })
       .select().single();
     if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json(data);
