@@ -946,12 +946,15 @@ async function reserveAccount(id) {
         .update({ status: "sold" })
         .eq("id", id)
         .eq("status", "active")
-        .select();
-      if (error) { console.error(error); return false; }
-      return !!(data && data.length);
+        .select("id");
+      if (error) {
+        console.error("Ошибка резервирования товара:", error);
+        return { ok: false, systemError: true, message: error.message };
+      }
+      return { ok: !!(data && data.length), systemError: false };
     } catch (e) {
-      console.error(e);
-      return false;
+      console.error("Ошибка резервирования товара:", e);
+      return { ok: false, systemError: true, message: e.message };
     }
   } else {
     const sold = getSoldLocal();
@@ -1168,7 +1171,22 @@ function getPurchasesLocal() {
 function savePurchasesLocal(list) {
   try { localStorage.setItem("purchases", JSON.stringify(list)); } catch (e) {}
 }
-function addPurchaseRecords(items) {
+async function addPurchaseRecords(items) {
+  if (supabaseClient) {
+    try {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      const rows = items.map(item => ({
+        buyer_id: user?.id || null,
+        account_id: item.id,
+        price: item.price
+      }));
+      const { error } = await supabaseClient.from("purchases").insert(rows);
+      if (error) console.error("Ошибка записи покупки в purchases:", error);
+    } catch (e) {
+      console.error("Ошибка записи покупки:", e);
+    }
+    return;
+  }
   const list = getPurchasesLocal();
   const now = new Date().toISOString();
   items.forEach(item => {
@@ -1195,13 +1213,13 @@ async function getPurchases() {
   }
   try {
     const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) return [];
-    const { data, error } = await supabaseClient
+    let q = supabaseClient
       .from("purchases")
       .select("*, account:accounts(title, server:servers(name), photos, description, secret_info)")
-      .eq("buyer_id", user.id)
       .order("created_at", { ascending: false });
-    if (error) { console.error(error); return []; }
+    q = user ? q.eq("buyer_id", user.id) : q.is("buyer_id", null);
+    const { data, error } = await q;
+    if (error) { console.error("Ошибка чтения purchases:", error); return []; }
     return (data || []).map(p => ({
       id: p.id,
       title: p.account?.title || "Аккаунт",
@@ -1372,7 +1390,7 @@ async function payFromBalance(total) {
     if (!systemErrorMsg && document.getElementById("page-cart").classList.contains("active")) renderCartPage();
     return;
   }
-  addPurchaseRecords(purchased);
+  await addPurchaseRecords(purchased);
   const purchasedTotal = purchased.reduce((s, i) => s + (i.price || 0), 0);
 
   const balanceEl = document.getElementById("profile-balance");
