@@ -99,6 +99,7 @@
 
   .skeleton{height:224px; border-radius:16px; border:1px solid var(--border); background:var(--surface); animation:pulse 1.4s ease-in-out infinite;}
   @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+  @keyframes spin{to{transform:rotate(360deg);}}
 
   /* search */
   .search-title{font-family:var(--font-display); font-size:26px; letter-spacing:.02em; color:#fff; margin:0 0 16px;}
@@ -574,6 +575,10 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/></svg>
             <textarea id="new-acc-description" placeholder="Полное описание товара: что входит в аккаунт, история, особенности..."></textarea>
           </div>
+          <div class="auth-input textarea-wrap span-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15v2m0-13a4 4 0 0 0-4 4v3H7a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2h-1V8a4 4 0 0 0-4-4Z"/></svg>
+            <textarea id="new-acc-secret" placeholder="Данные товара после оплаты: логин, пароль и т.д. (видно только покупателю)"></textarea>
+          </div>
           <div class="span-2" id="photo-inputs-wrap">
             <div class="photo-input-row" data-row>
               <div class="auth-input" style="flex:1;">
@@ -724,7 +729,14 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="product-overlay" onclick="if(event.target===this) closeProduct()">
+<section id="page-purchases" class="page">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+      <button class="btn-secondary" style="width:auto; padding:10px 14px;" onclick="closePurchases()">← Назад</button>
+      <h1 class="profile-title" style="margin:0;">МОИ ПОКУПКИ</h1>
+    </div>
+
+    <div id="purchases-list"></div>
+  </section>
   <div class="modal-sheet" style="max-width:480px;">
     <div class="modal-head">
       <h2>Товар</h2>
@@ -943,7 +955,7 @@ function toggleCart(id) {
   if (!a) return;
   const cart = getCart();
   if (cart[id]) delete cart[id];
-  else cart[id] = { id: a.id, title: a.title, server: a.server, price: a.price };
+  else cart[id] = { id: a.id, title: a.title, server: a.server, price: a.price, photos: a.photos || [], description: a.description || "", secret_info: a.secret_info || "" };
   saveCart(cart);
   renderProductModal(a);
   if (document.getElementById("page-cart").classList.contains("active")) renderCartPage();
@@ -1106,22 +1118,44 @@ const paymentMethods = {
 /* =========================================================
    ПОКУПКИ
    ========================================================= */
-const mockPurchases = [];
-// Пример структуры для будущих реальных покупок:
-// { id:"p1", title:"Дом в Los Santos + 3 бизнеса", server:"Sandy Shores", price:8900, status:"active", date:"2026-07-28" }
+function getPurchasesLocal() {
+  try { return JSON.parse(localStorage.getItem("purchases") || "[]"); } catch (e) { return []; }
+}
+function savePurchasesLocal(list) {
+  try { localStorage.setItem("purchases", JSON.stringify(list)); } catch (e) {}
+}
+function addPurchaseRecords(items) {
+  const list = getPurchasesLocal();
+  const now = new Date().toISOString();
+  items.forEach(item => {
+    list.unshift({
+      id: "pu_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
+      title: item.title,
+      server: item.server,
+      price: item.price,
+      photos: item.photos || [],
+      description: item.description || "",
+      secret_info: item.secret_info || "",
+      status: "completed",
+      date: now
+    });
+  });
+  savePurchasesLocal(list);
+}
 
-async function getPurchases(status) {
+const purchaseRegistry = {};
+
+async function getPurchases() {
   if (!supabaseClient) {
-    return mockPurchases.filter(p => p.status === status);
+    return getPurchasesLocal();
   }
   try {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return [];
     const { data, error } = await supabaseClient
       .from("purchases")
-      .select("*, account:accounts(title, server:servers(name))")
+      .select("*, account:accounts(title, server:servers(name), photos, description, secret_info)")
       .eq("buyer_id", user.id)
-      .eq("status", status)
       .order("created_at", { ascending: false });
     if (error) { console.error(error); return []; }
     return (data || []).map(p => ({
@@ -1129,7 +1163,10 @@ async function getPurchases(status) {
       title: p.account?.title || "Аккаунт",
       server: p.account?.server?.name || "—",
       price: p.price,
-      status: p.status,
+      photos: p.account?.photos || [],
+      description: p.account?.description || "",
+      secret_info: p.account?.secret_info || "",
+      status: "completed",
       date: p.created_at
     }));
   } catch (e) {
@@ -1139,9 +1176,10 @@ async function getPurchases(status) {
 }
 
 function purchaseRowHTML(p) {
+  purchaseRegistry[p.id] = p;
   const dateStr = p.date ? new Date(p.date).toLocaleDateString("ru-RU") : "";
   return `
-  <div class="purchase-row">
+  <div class="purchase-row" onclick="openPurchaseDetail('${p.id}')">
     <div class="purchase-thumb">${(p.server || "?").slice(0,1)}</div>
     <div class="purchase-info">
       <div class="purchase-title">${p.title}</div>
@@ -1149,35 +1187,50 @@ function purchaseRowHTML(p) {
     </div>
     <div class="purchase-right">
       <div class="purchase-price">${fmt(p.price)} ₽</div>
-      <span class="status-badge ${p.status}">${p.status === "active" ? "Активна" : "Завершена"}</span>
+      <span class="status-badge completed">Завершен</span>
     </div>
   </div>`;
 }
 
-async function renderPurchasesTab(status) {
-  const listEl = document.getElementById(`purchases-${status}-list`);
+async function renderPurchasesList() {
+  const listEl = document.getElementById("purchases-list");
   listEl.innerHTML = '<div class="empty">Загрузка...</div>';
-  const items = await getPurchases(status);
+  const items = await getPurchases();
   listEl.innerHTML = items.length
     ? items.map(purchaseRowHTML).join("")
-    : `<div class="empty">${status === "active" ? "У вас пока нет активных покупок." : "У вас пока нет завершённых покупок."}</div>`;
+    : `<div class="empty">У вас пока нет покупок.</div>`;
 }
 
 function openPurchases() {
   document.getElementById("page-profile").classList.remove("active");
   document.getElementById("page-purchases").classList.add("active");
-  renderPurchasesTab("active");
-  renderPurchasesTab("completed");
+  renderPurchasesList();
 }
 function closePurchases() {
   document.getElementById("page-purchases").classList.remove("active");
   document.getElementById("page-profile").classList.add("active");
 }
-function switchPurchasesTab(tab, btn) {
-  document.querySelectorAll("#page-purchases .admin-tab").forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
-  document.getElementById("purchases-tab-active").classList.toggle("active", tab === "active");
-  document.getElementById("purchases-tab-completed").classList.toggle("active", tab === "completed");
+
+function openPurchaseDetail(id) {
+  const p = purchaseRegistry[id];
+  if (!p) return;
+  const photos = p.photos && p.photos.length ? p.photos : [];
+  const gallery = photos.length
+    ? `<div class="product-gallery">${photos.map(ph => `<img src="${ph}" onerror="this.remove();" />`).join("")}</div>`
+    : `<div class="product-gallery-empty">${p.server}</div>`;
+  document.getElementById("purchase-detail-body").innerHTML = `
+    ${gallery}
+    <h1 class="product-detail-title">${p.title}</h1>
+    <p class="product-desc">${p.description && p.description.trim() ? p.description : "Описание отсутствует."}</p>
+    <div class="stat-box" style="margin-top:4px;">
+      <div class="stat-label">Данные товара</div>
+      <div class="stat-value text" style="white-space:pre-line; font-size:13.5px; line-height:1.6;">${p.secret_info && p.secret_info.trim() ? p.secret_info : "Продавец не указал данные."}</div>
+    </div>
+  `;
+  document.getElementById("purchase-detail-overlay").classList.add("active");
+}
+function closePurchaseDetail() {
+  document.getElementById("purchase-detail-overlay").classList.remove("active");
 }
 
 function openTopup() {
@@ -1225,7 +1278,45 @@ function closeCheckout() {
   document.getElementById("checkout-overlay").classList.remove("active");
 }
 function payFromBalance(total) {
-  alert("Оплата в разработке");
+  const cart = getCart();
+  const items = Object.values(cart);
+  if (!items.length) return;
+
+  document.getElementById("checkout-body").innerHTML = `
+    <div style="display:flex; flex-direction:column; align-items:center; gap:14px; padding:24px 0 12px;">
+      <div style="width:36px; height:36px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--accent); animation:spin .8s linear infinite;"></div>
+      <p style="font-size:14px; color:var(--text-muted); margin:0;">Оформление заказа...</p>
+    </div>
+  `;
+
+  const delay = 1500 + Math.random() * 2000;
+  setTimeout(() => {
+    addPurchaseRecords(items);
+
+    const balanceEl = document.getElementById("profile-balance");
+    if (balanceEl) {
+      const current = getUserBalance();
+      balanceEl.textContent = `${fmt(Math.max(current - total, 0))} ₽`;
+    }
+
+    saveCart({});
+    if (document.getElementById("page-cart").classList.contains("active")) renderCartPage();
+
+    document.getElementById("checkout-body").innerHTML = `
+      <div style="display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px; padding:8px 0 4px;">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--success);"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+        <h2 style="font-family:var(--font-display); font-size:22px; letter-spacing:.02em; color:#fff; margin:6px 0 0;">Товар оформлен!</h2>
+        <p style="font-size:13.5px; color:var(--text-muted); margin:0 0 14px; max-width:28ch;">Содержимое товаров проверьте в разделе Покупок профиля</p>
+        <button type="button" class="btn-primary" style="width:100%;" onclick="goToPurchasesFromCheckout()">Перейти в покупки</button>
+      </div>
+    `;
+  }, delay);
+}
+
+function goToPurchasesFromCheckout() {
+  closeCheckout();
+  goTo("profile");
+  openPurchases();
 }
 function openSupport() {
   document.getElementById("support-overlay").classList.add("active");
@@ -1428,14 +1519,16 @@ async function addAccount(e) {
   const tags = document.getElementById("new-acc-tags").value.split(",").map(t => t.trim()).filter(Boolean);
   const is_verified = document.getElementById("new-acc-verified").checked;
   const description = document.getElementById("new-acc-description").value.trim();
+  const secret_info = document.getElementById("new-acc-secret").value.trim();
   const photos = getPhotoUrls();
   try {
-    await adminFetch("/api/admin/accounts", { method: "POST", body: JSON.stringify({ title, server_id, level, price, tags, is_verified, description, photos, status: "active" }) });
+    await adminFetch("/api/admin/accounts", { method: "POST", body: JSON.stringify({ title, server_id, level, price, tags, is_verified, description, secret_info, photos, status: "active" }) });
     document.getElementById("new-acc-title").value = "";
     document.getElementById("new-acc-price").value = "";
     document.getElementById("new-acc-tags").value = "";
     document.getElementById("new-acc-verified").checked = false;
     document.getElementById("new-acc-description").value = "";
+    document.getElementById("new-acc-secret").value = "";
     resetPhotoRows();
     loadAdminAccounts();
     loadHome();
