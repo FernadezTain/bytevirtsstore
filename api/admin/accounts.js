@@ -38,7 +38,7 @@ export default async function handler(req, res) {
           // Удалить нельзя, не потеряв историю сделки, поэтому архивируем (скрываем из каталога).
           const { error: archiveErr } = await supabaseAdmin
             .from('accounts')
-            .update({ status: 'deleted' })
+            .update({ status: 'sold' })
             .eq('id', id);
           if (archiveErr) return res.status(500).json({ error: archiveErr.message });
           return res.status(200).json({ ok: true, archived: true });
