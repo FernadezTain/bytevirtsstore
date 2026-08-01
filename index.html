@@ -485,7 +485,25 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="auth-required-overlay" onclick="if(event.target===this) closeAuthRequired()">
+<div class="modal-overlay stacked" id="admin-error-overlay" onclick="if(event.target===this) closeAdminError()">
+  <div class="modal-sheet" style="text-align:center;">
+    <div class="modal-head" style="justify-content:center; position:relative;">
+      <h2>Ошибка</h2>
+      <button class="modal-close" style="position:absolute; right:0;" onclick="closeAdminError()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div style="width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; background:rgba(255,92,92,.14); margin:4px auto 16px;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
+    </div>
+    <p style="font-size:14px; color:var(--text-muted); max-width:280px; margin:0 auto 20px; line-height:1.5;" id="admin-error-text">
+      Что-то пошло не так.
+    </p>
+    <button type="button" class="btn-primary" style="width:100%;" onclick="closeAdminError()">Понятно</button>
+  </div>
+</div>
+
+<div class="modal-overlay stacked" id="auth-required-overlay" onclick="if(event.target===this) closeAuthRequired()">
   <div class="modal-sheet" style="text-align:center;">
     <div class="modal-head" style="justify-content:center; position:relative;">
       <h2>Нужен вход</h2>
@@ -2085,7 +2103,14 @@ async function deleteAccount(id) {
     await adminFetch("/api/admin/accounts", { method: "DELETE", body: JSON.stringify({ id }) });
     loadAdminAccounts();
     loadHome();
-  } catch (e) { alert(e.message); }
+  } catch (e) { showAdminError(e.message); }
+}
+function showAdminError(message) {
+  document.getElementById("admin-error-text").textContent = message || "Что-то пошло не так.";
+  document.getElementById("admin-error-overlay").classList.add("active");
+}
+function closeAdminError() {
+  document.getElementById("admin-error-overlay").classList.remove("active");
 }
 
 async function openEditAccount(id) {
