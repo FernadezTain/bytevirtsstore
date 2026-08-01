@@ -32,7 +32,19 @@ export default async function handler(req, res) {
     if (req.method === 'DELETE') {
       const { id } = req.body;
       const { error } = await supabaseAdmin.from('accounts').delete().eq('id', id);
-      if (error) return res.status(500).json({ error: error.message });
+      if (error) {
+        if (error.code === '23503') {
+          // Товар уже кто-то купил — есть строки в purchases, ссылающиеся на него.
+          // Удалить нельзя, не потеряв историю сделки, поэтому архивируем (скрываем из каталога).
+          const { error: archiveErr } = await supabaseAdmin
+            .from('accounts')
+            .update({ status: 'deleted' })
+            .eq('id', id);
+          if (archiveErr) return res.status(500).json({ error: archiveErr.message });
+          return res.status(200).json({ ok: true, archived: true });
+        }
+        return res.status(500).json({ error: error.message });
+      }
       return res.status(200).json({ ok: true });
     }
 
