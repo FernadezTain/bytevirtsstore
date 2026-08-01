@@ -414,6 +414,7 @@
   .admin-row-actions button:hover{color:var(--text); border-color:var(--border);}
   .admin-row-actions button.danger{color:var(--danger); border-color:rgba(255,92,92,.3);}
   .admin-row-actions button.danger:hover{background:rgba(255,92,92,.1);}
+  .admin-locked-badge{display:inline-flex; align-items:center; gap:5px; margin-top:6px; font-size:11px; font-weight:600; color:var(--spark); background:rgba(255,176,32,.12); border:1px solid rgba(255,176,32,.25); border-radius:8px; padding:4px 8px;}
 
   @media (min-width:480px){
     .admin-form-grid.two-col{grid-template-columns:1fr 1fr;}
@@ -481,6 +482,24 @@
     <a href="https://t.me/ByteVirts_bot" class="btn-primary" style="width:100%; display:block; text-align:center; text-decoration:none; box-sizing:border-box;">
       Открыть @ByteVirts_bot
     </a>
+  </div>
+</div>
+
+<div class="modal-overlay" id="auth-required-overlay" onclick="if(event.target===this) closeAuthRequired()">
+  <div class="modal-sheet" style="text-align:center;">
+    <div class="modal-head" style="justify-content:center; position:relative;">
+      <h2>Нужен вход</h2>
+      <button class="modal-close" style="position:absolute; right:0;" onclick="closeAuthRequired()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div style="width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--accent),var(--accent-2)); margin:4px auto 16px;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+    </div>
+    <p style="font-size:14px; color:var(--text-muted); max-width:280px; margin:0 auto 20px; line-height:1.5;" id="auth-required-text">
+      Войдите в аккаунт, чтобы продолжить.
+    </p>
+    <button type="button" class="btn-primary" style="width:100%;" onclick="goToLoginFromAuthRequired()">Войти в аккаунт</button>
   </div>
 </div>
 
@@ -721,6 +740,38 @@
     <h2 class="success-title">Счёт пополнен!</h2>
     <p class="success-sub">Сумма: <b id="success-amount">0 ₽</b></p>
     <button type="button" class="btn-primary" style="width:100%;" onclick="closeTopupSuccess()">Закрыть</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="edit-account-overlay" onclick="if(event.target===this) closeEditAccount()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h2>Редактировать товар</h2>
+      <button class="modal-close" onclick="closeEditAccount()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form class="admin-form-grid two-col" onsubmit="saveAccountEdit(event)">
+      <input type="hidden" id="edit-acc-id" />
+      <div class="auth-input span-2"><input id="edit-acc-title" type="text" placeholder="Название товара" required /></div>
+      <div class="select-wrap"><select id="edit-acc-server"></select></div>
+      <div class="auth-input"><input id="edit-acc-level" type="number" placeholder="Уровень" value="1" /></div>
+      <div class="auth-input"><input id="edit-acc-price" type="number" placeholder="Цена, ₽" required /></div>
+      <label class="check-row"><input id="edit-acc-verified" type="checkbox" /> Проверенный продавец</label>
+      <div class="auth-input span-2"><input id="edit-acc-tags" type="text" placeholder="Теги через запятую (АК-47, Бронежилет x5)" /></div>
+      <div class="auth-input textarea-wrap span-2">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/></svg>
+        <textarea id="edit-acc-description" placeholder="Полное описание товара: что входит в аккаунт, история, особенности..."></textarea>
+      </div>
+      <div class="auth-input textarea-wrap span-2">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15v2m0-13a4 4 0 0 0-4 4v3H7a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2h-1V8a4 4 0 0 0-4-4Z"/></svg>
+        <textarea id="edit-acc-secret" placeholder="Данные товара после оплаты: логин, пароль и т.д. (видно только покупателю)"></textarea>
+      </div>
+      <div class="span-2" id="edit-photo-inputs-wrap"></div>
+      <button type="button" class="btn-secondary span-2" id="edit-add-photo-btn" onclick="addPhotoRow('edit-photo-inputs-wrap','edit-photo-preview','edit-add-photo-btn')" style="margin-bottom:0;">+ Добавить изображение</button>
+      <div id="edit-photo-preview" class="photo-preview span-2"></div>
+      <button type="submit" class="btn-primary span-2">Сохранить изменения</button>
+    </form>
   </div>
 </div>
 
@@ -1123,9 +1174,13 @@ function saveCart(cart) {
 function isInCart(id) {
   return !!getCart()[id];
 }
-function toggleCart(id) {
+async function toggleCart(id) {
   const a = productRegistry[id];
   if (!a) return;
+  if (!(await isLoggedIn())) {
+    showAuthRequired("Войдите в аккаунт, чтобы добавлять товары в корзину.");
+    return;
+  }
   const cart = getCart();
   if (cart[id]) delete cart[id];
   else cart[id] = { id: a.id, title: a.title, server: a.server, price: a.price, photos: a.photos || [], description: a.description || "", secret_info: a.secret_info || "" };
@@ -1348,6 +1403,25 @@ function closeNotTelegramNotice() {
   document.getElementById("not-telegram-overlay").classList.remove("active");
 }
 
+async function isLoggedIn() {
+  if (!supabaseClient) return false;
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  return !!session;
+}
+function showAuthRequired(message) {
+  document.getElementById("auth-required-text").textContent = message || "Войдите в аккаунт, чтобы продолжить.";
+  document.getElementById("auth-required-overlay").classList.add("active");
+}
+function closeAuthRequired() {
+  document.getElementById("auth-required-overlay").classList.remove("active");
+}
+function goToLoginFromAuthRequired() {
+  closeAuthRequired();
+  document.getElementById("product-overlay")?.classList.remove("active");
+  document.getElementById("topup-overlay")?.classList.remove("active");
+  goTo("profile");
+}
+
 async function payWithStars() {
   const tg = window.Telegram?.WebApp;
   const isInsideTelegram = !!(tg && tg.initData && tg.initData.length > 0);
@@ -1362,14 +1436,17 @@ async function payWithStars() {
   input.value = stars;
   updateStarsPreview();
 
+  if (!supabaseClient) { alert("Нет подключения к серверу"); return; }
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (!session) {
+    showAuthRequired("Войдите в аккаунт, чтобы пополнить баланс.");
+    return;
+  }
+
   const btn = document.getElementById("stars-pay-btn");
   btn.disabled = true;
   btn.textContent = "Создание счёта...";
   try {
-    if (!supabaseClient) throw new Error("Нет подключения к серверу");
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (!session) throw new Error("Войдите в аккаунт, чтобы пополнить баланс");
-
     const res = await fetch("/api/telegram/create-invoice", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
@@ -1884,54 +1961,57 @@ async function deleteServer(id) {
 
 const MAX_PHOTO_ROWS = 10;
 
-function getPhotoUrls() {
-  return Array.from(document.querySelectorAll(".photo-url-input"))
+function getPhotoUrls(wrapId = "photo-inputs-wrap") {
+  return Array.from(document.querySelectorAll(`#${wrapId} .photo-url-input`))
     .map(i => i.value.trim())
     .filter(Boolean);
 }
-function addPhotoRow() {
-  const rows = document.querySelectorAll("#photo-inputs-wrap .photo-input-row");
+function addPhotoRow(wrapId = "photo-inputs-wrap", previewId = "photo-preview", btnId = "add-photo-btn") {
+  const rows = document.querySelectorAll(`#${wrapId} .photo-input-row`);
   if (rows.length >= MAX_PHOTO_ROWS) return;
-  const wrap = document.getElementById("photo-inputs-wrap");
+  const wrap = document.getElementById(wrapId);
   const row = document.createElement("div");
   row.className = "photo-input-row";
   row.setAttribute("data-row", "");
   row.innerHTML = `
     <div class="auth-input" style="flex:1;">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
-      <input type="text" class="photo-url-input" placeholder="Ссылка на фото (https://...)" oninput="renderPhotoPreview()" />
+      <input type="text" class="photo-url-input" placeholder="Ссылка на фото (https://...)" oninput="renderPhotoPreview('${wrapId}','${previewId}')" />
     </div>
-    <button type="button" class="photo-remove-btn" onclick="removePhotoRow(this)">
+    <button type="button" class="photo-remove-btn" onclick="removePhotoRow(this,'${wrapId}','${previewId}','${btnId}')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
     </button>`;
   wrap.appendChild(row);
-  updateAddPhotoBtn();
+  updateAddPhotoBtn(wrapId, btnId);
 }
-function removePhotoRow(btn) {
+function removePhotoRow(btn, wrapId = "photo-inputs-wrap", previewId = "photo-preview", btnId = "add-photo-btn") {
   btn.closest(".photo-input-row").remove();
-  renderPhotoPreview();
-  updateAddPhotoBtn();
+  renderPhotoPreview(wrapId, previewId);
+  updateAddPhotoBtn(wrapId, btnId);
 }
-function updateAddPhotoBtn() {
-  const rows = document.querySelectorAll("#photo-inputs-wrap .photo-input-row");
-  const btn = document.getElementById("add-photo-btn");
+function updateAddPhotoBtn(wrapId = "photo-inputs-wrap", btnId = "add-photo-btn") {
+  const rows = document.querySelectorAll(`#${wrapId} .photo-input-row`);
+  const btn = document.getElementById(btnId);
   if (btn) btn.style.display = rows.length >= MAX_PHOTO_ROWS ? "none" : "block";
 }
-function resetPhotoRows() {
-  const wrap = document.getElementById("photo-inputs-wrap");
-  wrap.innerHTML = `
+function resetPhotoRows(wrapId = "photo-inputs-wrap", previewId = "photo-preview", btnId = "add-photo-btn", urls = []) {
+  const wrap = document.getElementById(wrapId);
+  const list = urls.length ? urls : [""];
+  wrap.innerHTML = list.map(u => `
     <div class="photo-input-row" data-row>
       <div class="auth-input" style="flex:1;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
-        <input type="text" class="photo-url-input" placeholder="Ссылка на фото (https://...)" oninput="renderPhotoPreview()" />
+        <input type="text" class="photo-url-input" value="${u.replace(/"/g, "&quot;")}" placeholder="Ссылка на фото (https://...)" oninput="renderPhotoPreview('${wrapId}','${previewId}')" />
       </div>
-    </div>`;
-  updateAddPhotoBtn();
-  renderPhotoPreview();
+      ${urls.length ? `<button type="button" class="photo-remove-btn" onclick="removePhotoRow(this,'${wrapId}','${previewId}','${btnId}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>` : ""}
+    </div>`).join("");
+  updateAddPhotoBtn(wrapId, btnId);
+  renderPhotoPreview(wrapId, previewId);
 }
-function renderPhotoPreview() {
-  const urls = getPhotoUrls();
-  const box = document.getElementById("photo-preview");
+function renderPhotoPreview(wrapId = "photo-inputs-wrap", previewId = "photo-preview") {
+  const urls = getPhotoUrls(wrapId);
+  const box = document.getElementById(previewId);
+  if (!box) return;
   box.innerHTML = urls.map(u => `
     <div class="photo-thumb">
       <img src="${u}" onerror="this.parentElement.classList.add('broken'); this.remove();" />
@@ -1944,19 +2024,33 @@ async function populateAdminServerSelect() {
   const servers = await getServers();
   select.innerHTML = servers.map(s => `<option value="${s.id || ""}">${s.name}</option>`).join("");
 }
+const adminAccountRegistry = {};
+
 async function loadAdminAccounts() {
   await populateAdminServerSelect();
   const list = document.getElementById("admin-accounts-list");
   list.innerHTML = '<div class="empty">Загрузка...</div>';
   try {
     const accounts = await adminFetch("/api/admin/accounts");
-    list.innerHTML = accounts.length ? accounts.map(a => `
+    list.innerHTML = accounts.length ? accounts.map(a => {
+      adminAccountRegistry[a.id] = a;
+      const locked = a.status === "sold" || a.status === "deleted";
+      return `
       <div class="admin-row">
-        <div class="admin-row-info"><b>${a.title}</b><span class="meta">${(a.server && a.server.name) || "—"} · LVL ${a.level} · ${fmt(a.price)} ₽ · ${a.status}</span></div>
+        <div class="admin-row-info">
+          <b>${a.title}</b>
+          <span class="meta">${(a.server && a.server.name) || "—"} · LVL ${a.level} · ${fmt(a.price)} ₽ · ${a.status}</span>
+          ${locked ? `<span class="admin-locked-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Товар уже куплен, редактировать нельзя
+          </span>` : ""}
+        </div>
         <div class="admin-row-actions">
+          ${locked ? "" : `<button onclick="openEditAccount('${a.id}')">Редактировать</button>`}
           <button class="danger" onclick="deleteAccount('${a.id}')">Удалить</button>
         </div>
-      </div>`).join("") : '<div class="empty">Товаров пока нет.</div>';
+      </div>`;
+    }).join("") : '<div class="empty">Товаров пока нет.</div>';
   } catch (e) {
     list.innerHTML = `<div class="empty">Ошибка: ${e.message}</div>`;
   }
@@ -1992,6 +2086,57 @@ async function deleteAccount(id) {
     loadAdminAccounts();
     loadHome();
   } catch (e) { alert(e.message); }
+}
+
+async function openEditAccount(id) {
+  const a = adminAccountRegistry[id];
+  if (!a) return;
+  if (a.status === "sold" || a.status === "deleted") {
+    alert("Товар уже куплен, редактировать нельзя.");
+    return;
+  }
+
+  const select = document.getElementById("edit-acc-server");
+  const servers = await getServers();
+  select.innerHTML = servers.map(s => `<option value="${s.id || ""}">${s.name}</option>`).join("");
+  select.value = a.server_id || (a.server && a.server.id) || "";
+
+  document.getElementById("edit-acc-id").value = a.id;
+  document.getElementById("edit-acc-title").value = a.title || "";
+  document.getElementById("edit-acc-level").value = a.level ?? 1;
+  document.getElementById("edit-acc-price").value = a.price ?? 0;
+  document.getElementById("edit-acc-verified").checked = !!a.is_verified;
+  document.getElementById("edit-acc-tags").value = (a.tags || []).join(", ");
+  document.getElementById("edit-acc-description").value = a.description || "";
+  document.getElementById("edit-acc-secret").value = a.secret_info || "";
+  resetPhotoRows("edit-photo-inputs-wrap", "edit-photo-preview", "edit-add-photo-btn", a.photos || []);
+
+  document.getElementById("edit-account-overlay").classList.add("active");
+}
+function closeEditAccount() {
+  document.getElementById("edit-account-overlay").classList.remove("active");
+}
+async function saveAccountEdit(e) {
+  e.preventDefault();
+  const id = document.getElementById("edit-acc-id").value;
+  const title = document.getElementById("edit-acc-title").value.trim();
+  const server_id = document.getElementById("edit-acc-server").value || null;
+  const level = Number(document.getElementById("edit-acc-level").value) || 1;
+  const price = Number(document.getElementById("edit-acc-price").value) || 0;
+  const tags = document.getElementById("edit-acc-tags").value.split(",").map(t => t.trim()).filter(Boolean);
+  const is_verified = document.getElementById("edit-acc-verified").checked;
+  const description = document.getElementById("edit-acc-description").value.trim();
+  const secret_info = document.getElementById("edit-acc-secret").value.trim();
+  const photos = getPhotoUrls("edit-photo-inputs-wrap");
+  try {
+    await adminFetch("/api/admin/accounts", {
+      method: "PUT",
+      body: JSON.stringify({ id, title, server_id, level, price, tags, is_verified, description, secret_info, photos })
+    });
+    closeEditAccount();
+    loadAdminAccounts();
+    loadHome();
+  } catch (e2) { alert(e2.message); }
 }
 
 function showSignedOut() {
