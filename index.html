@@ -700,7 +700,10 @@
           <button type="submit" class="btn-primary span-2">Добавить товар</button>
         </form>
       </div>
-      <p class="admin-list-title">Список товаров</p>
+      <div class="admin-tabs" style="margin-top:4px;">
+        <button class="admin-tab active" data-acc-view="active" onclick="switchAccView('active', this)">Активные</button>
+        <button class="admin-tab" data-acc-view="archived" onclick="switchAccView('archived', this)">Завершённые</button>
+      </div>
       <div id="admin-accounts-list"></div>
     </div>
     <div id="admin-tab-servers" class="admin-tab-panel">
@@ -2043,6 +2046,42 @@ async function populateAdminServerSelect() {
   select.innerHTML = servers.map(s => `<option value="${s.id || ""}">${s.name}</option>`).join("");
 }
 const adminAccountRegistry = {};
+let adminAllAccounts = [];
+let adminAccView = "active";
+
+function switchAccView(view, btn) {
+  adminAccView = view;
+  document.querySelectorAll('[data-acc-view]').forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderAdminAccountsList();
+}
+
+function renderAdminAccountsList() {
+  const list = document.getElementById("admin-accounts-list");
+  const isArchivedView = adminAccView === "archived";
+  const filtered = adminAllAccounts.filter(a => {
+    const locked = a.status === "sold" || a.status === "deleted";
+    return isArchivedView ? locked : !locked;
+  });
+  list.innerHTML = filtered.length ? filtered.map(a => {
+    const locked = a.status === "sold" || a.status === "deleted";
+    return `
+    <div class="admin-row">
+      <div class="admin-row-info">
+        <b>${a.title}</b>
+        <span class="meta">${(a.server && a.server.name) || "—"} · LVL ${a.level} · ${fmt(a.price)} ₽ · ${a.status}</span>
+        ${locked ? `<span class="admin-locked-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Товар уже куплен, редактировать нельзя
+        </span>` : ""}
+      </div>
+      <div class="admin-row-actions">
+        ${locked ? "" : `<button onclick="openEditAccount('${a.id}')">Редактировать</button>`}
+        <button class="danger" onclick="deleteAccount('${a.id}')">Удалить</button>
+      </div>
+    </div>`;
+  }).join("") : `<div class="empty">${isArchivedView ? "Завершённых товаров пока нет." : "Активных товаров пока нет."}</div>`;
+}
 
 async function loadAdminAccounts() {
   await populateAdminServerSelect();
@@ -2050,25 +2089,9 @@ async function loadAdminAccounts() {
   list.innerHTML = '<div class="empty">Загрузка...</div>';
   try {
     const accounts = await adminFetch("/api/admin/accounts");
-    list.innerHTML = accounts.length ? accounts.map(a => {
-      adminAccountRegistry[a.id] = a;
-      const locked = a.status === "sold" || a.status === "deleted";
-      return `
-      <div class="admin-row">
-        <div class="admin-row-info">
-          <b>${a.title}</b>
-          <span class="meta">${(a.server && a.server.name) || "—"} · LVL ${a.level} · ${fmt(a.price)} ₽ · ${a.status}</span>
-          ${locked ? `<span class="admin-locked-badge">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            Товар уже куплен, редактировать нельзя
-          </span>` : ""}
-        </div>
-        <div class="admin-row-actions">
-          ${locked ? "" : `<button onclick="openEditAccount('${a.id}')">Редактировать</button>`}
-          <button class="danger" onclick="deleteAccount('${a.id}')">Удалить</button>
-        </div>
-      </div>`;
-    }).join("") : '<div class="empty">Товаров пока нет.</div>';
+    adminAllAccounts = accounts;
+    accounts.forEach(a => adminAccountRegistry[a.id] = a);
+    renderAdminAccountsList();
   } catch (e) {
     list.innerHTML = `<div class="empty">Ошибка: ${e.message}</div>`;
   }
@@ -2100,9 +2123,12 @@ async function addAccount(e) {
 async function deleteAccount(id) {
   if (!confirm("Удалить товар?")) return;
   try {
-    await adminFetch("/api/admin/accounts", { method: "DELETE", body: JSON.stringify({ id }) });
+    const result = await adminFetch("/api/admin/accounts", { method: "DELETE", body: JSON.stringify({ id }) });
     loadAdminAccounts();
     loadHome();
+    if (result?.archived) {
+      showAdminError("Товар уже куплен — удалить его совсем нельзя, иначе пропадёт история покупки у клиента. Он скрыт из каталога и помечен ниже как «уже куплен».");
+    }
   } catch (e) { showAdminError(e.message); }
 }
 function showAdminError(message) {
