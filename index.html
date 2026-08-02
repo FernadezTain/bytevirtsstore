@@ -71,11 +71,26 @@
   .filter-btn{flex-shrink:0; width:44px; height:44px; border-radius:14px; border:1px solid var(--border); background:var(--surface); display:flex; align-items:center; justify-content:center; color:var(--text-muted); transition:border-color .2s, color .2s, background .2s;}
   .filter-btn:hover{color:var(--text);}
   .filter-btn.active{border-color:var(--accent); color:var(--accent); background:rgba(255,61,31,.1);}
-  .filter-field{margin-bottom:16px;}
+  .filter-field{margin-bottom:18px; opacity:0; transform:translateY(10px); animation:filterFieldIn .4s cubic-bezier(.22,1,.36,1) forwards;}
+  .filter-field:nth-of-type(1){animation-delay:.05s;}
+  .filter-field:nth-of-type(2){animation-delay:.12s;}
+  @keyframes filterFieldIn{to{opacity:1; transform:translateY(0);}}
   .filter-label{display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:8px;}
-  .filter-level-row{display:flex; align-items:center; gap:10px;}
-  .filter-level-row .auth-input{flex:1;}
-  .filter-level-dash{color:var(--text-faint); flex-shrink:0;}
+  .filter-level-row{display:flex; align-items:center; gap:8px; min-width:0;}
+  .filter-level-row .auth-input{flex:1; min-width:0; padding:12px 10px;}
+  .filter-level-row .auth-input input{width:100%; min-width:0;}
+  .filter-level-row .auth-input input::-webkit-outer-spin-button,
+  .filter-level-row .auth-input input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
+  .filter-level-row .auth-input input[type="number"]{-moz-appearance:textfield;}
+  .filter-level-dash{color:var(--text-faint); flex-shrink:0; font-size:13px;}
+  #filters-overlay .btn-primary,
+  #filters-overlay .btn-secondary{opacity:0; transform:translateY(10px); animation:filterFieldIn .4s cubic-bezier(.22,1,.36,1) forwards; animation-delay:.18s;}
+  #filters-overlay .btn-secondary{animation-delay:.22s;}
+  @media (max-width:380px){
+    #filters-overlay .modal-sheet{padding:18px 16px; border-radius:20px;}
+    .filter-level-row{gap:6px;}
+    .filter-level-row .auth-input{padding:11px 8px;}
+  }
   .chip{flex-shrink:0; border-radius:999px; padding:8px 16px; font-size:12px; font-weight:600; border:1px solid var(--border); background:var(--surface); color:var(--text-muted); white-space:nowrap;}
   .chip.active{border:none; color:#fff; background:linear-gradient(90deg,var(--accent),var(--accent-2));}
 
@@ -759,7 +774,7 @@
 </div>
 
 <div class="modal-overlay" id="filters-overlay" onclick="if(event.target===this) closeFilters()">
-  <div class="modal-sheet">
+  <div class="modal-sheet" style="max-width:400px;">
     <div class="modal-head">
       <h2>Фильтры</h2>
       <button class="modal-close" onclick="closeFilters()">
