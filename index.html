@@ -67,6 +67,12 @@
 
   .rail{display:flex; gap:8px; overflow-x:auto; margin-bottom:16px; scrollbar-width:none;}
   .rail::-webkit-scrollbar{height:0;}
+  .site-footer{margin-top:32px; padding-top:18px; border-top:1px solid var(--border-soft); text-align:center;}
+  .site-footer p{margin:0 0 6px; font-size:11.5px; color:var(--text-faint); line-height:1.5;}
+  .site-footer-brand{color:var(--text-muted) !important;}
+  .site-footer-links a{color:var(--text-muted); text-decoration:none;}
+  .site-footer-links a:hover{color:var(--accent);}
+  .site-footer-links span{margin:0 6px; color:var(--text-faint);}
   .home-filter-row{display:flex; align-items:center; gap:10px; margin-bottom:16px;}
   .home-filter-row .rail{margin-bottom:0; flex:1; min-width:0;}
   .filter-btn{flex-shrink:0; width:44px; height:44px; border-radius:14px; border:1px solid var(--border); background:var(--surface); display:flex; align-items:center; justify-content:center; color:var(--text-muted); transition:border-color .2s, color .2s, background .2s;}
@@ -764,6 +770,18 @@
     <div id="cart-list"></div>
     <div id="cart-summary-wrap"></div>
   </section>
+
+<footer class="site-footer">
+    <p class="site-footer-brand">ByteVirts — торговая площадка виртуальных товаров</p>
+    <p class="site-footer-inn">ИНН: <span id="footer-inn">501404320805</span></p>
+    <p class="site-footer-links">
+      <a href="/offer.html">Публичная оферта</a>
+      <span>·</span>
+      <a href="/privacy.html">Политика конфиденциальности</a>
+      <span>·</span>
+      <a href="mailto:support@bytevirts.vercel.app">support@bytevirts.vercel.app</a>
+    </p>
+  </footer>
 
 </main>
 <div class="payment-success-overlay" id="payment-success-overlay">
