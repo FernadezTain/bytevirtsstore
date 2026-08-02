@@ -52,7 +52,6 @@
   .guarantee svg{color:var(--success);}
 
   main{padding-bottom:112px; padding-top:16px; min-height:100dvh;}
-  #page-admin{padding-bottom:96px;}
   .page{display:none; animation:fadeUp .4s cubic-bezier(.22,1,.36,1) both;}
   .page.active{display:block;}
   @keyframes fadeUp{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
@@ -67,6 +66,16 @@
 
   .rail{display:flex; gap:8px; overflow-x:auto; margin-bottom:16px; scrollbar-width:none;}
   .rail::-webkit-scrollbar{height:0;}
+  .home-filter-row{display:flex; align-items:center; gap:10px; margin-bottom:16px;}
+  .home-filter-row .rail{margin-bottom:0; flex:1; min-width:0;}
+  .filter-btn{flex-shrink:0; width:44px; height:44px; border-radius:14px; border:1px solid var(--border); background:var(--surface); display:flex; align-items:center; justify-content:center; color:var(--text-muted); transition:border-color .2s, color .2s, background .2s;}
+  .filter-btn:hover{color:var(--text);}
+  .filter-btn.active{border-color:var(--accent); color:var(--accent); background:rgba(255,61,31,.1);}
+  .filter-field{margin-bottom:16px;}
+  .filter-label{display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:8px;}
+  .filter-level-row{display:flex; align-items:center; gap:10px;}
+  .filter-level-row .auth-input{flex:1;}
+  .filter-level-dash{color:var(--text-faint); flex-shrink:0;}
   .chip{flex-shrink:0; border-radius:999px; padding:8px 16px; font-size:12px; font-weight:600; border:1px solid var(--border); background:var(--surface); color:var(--text-muted); white-space:nowrap;}
   .chip.active{border:none; color:#fff; background:linear-gradient(90deg,var(--accent),var(--accent-2));}
 
@@ -466,7 +475,7 @@
 </head>
 <body>
 
-<div class="modal-overlay stacked" id="not-telegram-overlay" onclick="if(event.target===this) closeNotTelegramNotice()">
+<div class="modal-overlay" id="not-telegram-overlay" onclick="if(event.target===this) closeNotTelegramNotice()">
   <div class="modal-sheet" style="text-align:center;">
     <div class="modal-head" style="justify-content:center; position:relative;">
       <h2>Нужен Telegram</h2>
@@ -486,25 +495,7 @@
   </div>
 </div>
 
-<div class="modal-overlay stacked" id="admin-error-overlay" onclick="if(event.target===this) closeAdminError()">
-  <div class="modal-sheet" style="text-align:center;">
-    <div class="modal-head" style="justify-content:center; position:relative;">
-      <h2>Ошибка</h2>
-      <button class="modal-close" style="position:absolute; right:0;" onclick="closeAdminError()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <div style="width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; background:rgba(255,92,92,.14); margin:4px auto 16px;">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
-    </div>
-    <p style="font-size:14px; color:var(--text-muted); max-width:280px; margin:0 auto 20px; line-height:1.5;" id="admin-error-text">
-      Что-то пошло не так.
-    </p>
-    <button type="button" class="btn-primary" style="width:100%;" onclick="closeAdminError()">Понятно</button>
-  </div>
-</div>
-
-<div class="modal-overlay stacked" id="auth-required-overlay" onclick="if(event.target===this) closeAuthRequired()">
+<div class="modal-overlay" id="auth-required-overlay" onclick="if(event.target===this) closeAuthRequired()">
   <div class="modal-sheet" style="text-align:center;">
     <div class="modal-head" style="justify-content:center; position:relative;">
       <h2>Нужен вход</h2>
@@ -550,7 +541,12 @@
       </div>
     </div>
 
-    <div class="rail" id="server-rail"></div>
+    <div class="home-filter-row">
+      <div class="rail" id="server-rail"></div>
+      <button type="button" class="filter-btn" id="home-filter-btn" onclick="openFilters()" aria-label="Фильтры">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16"/><path d="M7 12h10"/><path d="M10 18h4"/></svg>
+      </button>
+    </div>
 
     <div class="section-title">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a6.5 6.5 0 1 1-13 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5Z"/></svg>
@@ -701,10 +697,7 @@
           <button type="submit" class="btn-primary span-2">Добавить товар</button>
         </form>
       </div>
-      <div class="admin-tabs" style="margin-top:4px;">
-        <button class="admin-tab active" data-acc-view="active" onclick="switchAccView('active', this)">Активные</button>
-        <button class="admin-tab" data-acc-view="archived" onclick="switchAccView('archived', this)">Завершённые</button>
-      </div>
+      <p class="admin-list-title">Список товаров</p>
       <div id="admin-accounts-list"></div>
     </div>
     <div id="admin-tab-servers" class="admin-tab-panel">
@@ -762,6 +755,33 @@
     <h2 class="success-title">Счёт пополнен!</h2>
     <p class="success-sub">Сумма: <b id="success-amount">0 ₽</b></p>
     <button type="button" class="btn-primary" style="width:100%;" onclick="closeTopupSuccess()">Закрыть</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="filters-overlay" onclick="if(event.target===this) closeFilters()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h2>Фильтры</h2>
+      <button class="modal-close" onclick="closeFilters()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form onsubmit="applyFilters(event)">
+      <div class="filter-field">
+        <label class="filter-label">Сервер</label>
+        <div class="select-wrap"><select id="filter-server"></select></div>
+      </div>
+      <div class="filter-field">
+        <label class="filter-label">Уровень</label>
+        <div class="filter-level-row">
+          <div class="auth-input"><input id="filter-level-min" type="number" min="0" placeholder="От" /></div>
+          <span class="filter-level-dash">—</span>
+          <div class="auth-input"><input id="filter-level-max" type="number" min="0" placeholder="До" /></div>
+        </div>
+      </div>
+      <button type="submit" class="btn-primary" style="width:100%; margin-top:4px;">Показать</button>
+      <button type="button" class="btn-secondary" style="width:100%; margin-top:10px;" onclick="resetFilters()">Сбросить фильтры</button>
+    </form>
   </div>
 </div>
 
@@ -1016,12 +1036,14 @@ const mockAccounts = [
   { id:"6", title:"Полицейская фракция, звание майор", server:"Rio", level:210, price:5400, views:133, is_verified:false, status:"active", warehouse_items:["Служебное оружие"], seller:{username:"LawOrder", rating:4.6, deals_count:41} }
 ];
 
-async function getAccounts({ query, server } = {}) {
+async function getAccounts({ query, server, levelMin, levelMax } = {}) {
   if (!supabaseClient) {
     const sold = getSoldLocal();
     let results = mockAccounts.filter(a => (a.status === "active" || a.status === "reserved") && !sold[a.id]);
     if (query) { const q = query.toLowerCase(); results = results.filter(a => a.title.toLowerCase().includes(q)); }
     if (server) results = results.filter(a => a.server === server);
+    if (levelMin != null) results = results.filter(a => a.level >= levelMin);
+    if (levelMax != null) results = results.filter(a => a.level <= levelMax);
     return results;
   }
   let q = supabaseClient.from("accounts")
@@ -1029,6 +1051,8 @@ async function getAccounts({ query, server } = {}) {
     .in("status", ["active", "reserved"])
     .order("created_at", { ascending: false });
   if (query) q = q.ilike("title", `%${query}%`);
+  if (levelMin != null) q = q.gte("level", levelMin);
+  if (levelMax != null) q = q.lte("level", levelMax);
   const { data, error } = await q;
   if (error) { console.error(error); return []; }
   let mapped = (data || []).map(a => ({
@@ -1260,35 +1284,88 @@ async function renderCartPage() {
 /* =========================================================
    4. СТРАНИЦА «ГЛАВНАЯ»
    ========================================================= */
+let homeFilters = { server: "", levelMin: null, levelMax: null };
+
 async function loadHome() {
   const grid = document.getElementById("home-grid");
   grid.innerHTML = skeletons(4);
   const servers = await getServers();
   renderServerRail(servers);
-  const accounts = await getAccounts();
-  renderHomeGrid(accounts);
+  await applyHomeFilters();
 }
 
 function renderServerRail(servers) {
   const rail = document.getElementById("server-rail");
-  rail.innerHTML = `<button class="chip active" onclick="filterByServer('', this)">Все сервера</button>` +
-    servers.map(s => `<button class="chip" onclick="filterByServer('${s.name}', this)">${s.name}</button>`).join("");
+  rail.innerHTML = `<button class="chip ${homeFilters.server ? "" : "active"}" onclick="filterByServer('', this)">Все сервера</button>` +
+    servers.map(s => `<button class="chip ${homeFilters.server === s.name ? "active" : ""}" onclick="filterByServer('${s.name}', this)">${s.name}</button>`).join("");
 }
 
 async function filterByServer(name, btn) {
   document.querySelectorAll("#server-rail .chip").forEach(c => c.classList.remove("active"));
   btn.classList.add("active");
+  homeFilters.server = name;
+  await applyHomeFilters();
+}
+
+async function applyHomeFilters() {
   const grid = document.getElementById("home-grid");
   grid.innerHTML = skeletons(4);
-  const accounts = await getAccounts({ server: name || undefined });
+  const accounts = await getAccounts({
+    server: homeFilters.server || undefined,
+    levelMin: homeFilters.levelMin,
+    levelMax: homeFilters.levelMax
+  });
   renderHomeGrid(accounts);
+  updateFilterBtnState();
+}
+
+function updateFilterBtnState() {
+  const btn = document.getElementById("home-filter-btn");
+  if (btn) btn.classList.toggle("active", homeFilters.levelMin != null || homeFilters.levelMax != null);
 }
 
 function renderHomeGrid(accounts) {
   const grid = document.getElementById("home-grid");
   grid.innerHTML = accounts.length
     ? accounts.map(cardHTML).join("")
-    : `<div class="empty" style="grid-column:1/-1;">Пока нет активных объявлений.</div>`;
+    : `<div class="empty" style="grid-column:1/-1;">По заданным параметрам ничего не найдено.</div>`;
+}
+
+/* =========================================================
+   ФИЛЬТРЫ (сервер + уровень)
+   ========================================================= */
+async function openFilters() {
+  const select = document.getElementById("filter-server");
+  const servers = await getServers();
+  select.innerHTML = `<option value="">Все сервера</option>` + servers.map(s => `<option value="${s.name}">${s.name}</option>`).join("");
+  select.value = homeFilters.server || "";
+  document.getElementById("filter-level-min").value = homeFilters.levelMin ?? "";
+  document.getElementById("filter-level-max").value = homeFilters.levelMax ?? "";
+  document.getElementById("filters-overlay").classList.add("active");
+}
+function closeFilters() {
+  document.getElementById("filters-overlay").classList.remove("active");
+}
+async function applyFilters(e) {
+  e.preventDefault();
+  const server = document.getElementById("filter-server").value;
+  const minRaw = document.getElementById("filter-level-min").value;
+  const maxRaw = document.getElementById("filter-level-max").value;
+  homeFilters.server = server;
+  homeFilters.levelMin = minRaw !== "" ? Number(minRaw) : null;
+  homeFilters.levelMax = maxRaw !== "" ? Number(maxRaw) : null;
+  closeFilters();
+  renderServerRail(await getServers());
+  await applyHomeFilters();
+}
+async function resetFilters() {
+  homeFilters = { server: "", levelMin: null, levelMax: null };
+  document.getElementById("filter-server").value = "";
+  document.getElementById("filter-level-min").value = "";
+  document.getElementById("filter-level-max").value = "";
+  closeFilters();
+  renderServerRail(await getServers());
+  await applyHomeFilters();
 }
 
 /* =========================================================
@@ -2047,42 +2124,6 @@ async function populateAdminServerSelect() {
   select.innerHTML = servers.map(s => `<option value="${s.id || ""}">${s.name}</option>`).join("");
 }
 const adminAccountRegistry = {};
-let adminAllAccounts = [];
-let adminAccView = "active";
-
-function switchAccView(view, btn) {
-  adminAccView = view;
-  document.querySelectorAll('[data-acc-view]').forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
-  renderAdminAccountsList();
-}
-
-function renderAdminAccountsList() {
-  const list = document.getElementById("admin-accounts-list");
-  const isArchivedView = adminAccView === "archived";
-  const filtered = adminAllAccounts.filter(a => {
-    const locked = a.status === "sold" || a.status === "deleted";
-    return isArchivedView ? locked : !locked;
-  });
-  list.innerHTML = filtered.length ? filtered.map(a => {
-    const locked = a.status === "sold" || a.status === "deleted";
-    return `
-    <div class="admin-row">
-      <div class="admin-row-info">
-        <b>${a.title}</b>
-        <span class="meta">${(a.server && a.server.name) || "—"} · LVL ${a.level} · ${fmt(a.price)} ₽ · ${a.status}</span>
-        ${locked ? `<span class="admin-locked-badge">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          Товар уже куплен, редактировать нельзя
-        </span>` : ""}
-      </div>
-      <div class="admin-row-actions">
-        ${locked ? "" : `<button onclick="openEditAccount('${a.id}')">Редактировать</button>`}
-        <button class="danger" onclick="deleteAccount('${a.id}')">Удалить</button>
-      </div>
-    </div>`;
-  }).join("") : `<div class="empty">${isArchivedView ? "Завершённых товаров пока нет." : "Активных товаров пока нет."}</div>`;
-}
 
 async function loadAdminAccounts() {
   await populateAdminServerSelect();
@@ -2090,9 +2131,25 @@ async function loadAdminAccounts() {
   list.innerHTML = '<div class="empty">Загрузка...</div>';
   try {
     const accounts = await adminFetch("/api/admin/accounts");
-    adminAllAccounts = accounts;
-    accounts.forEach(a => adminAccountRegistry[a.id] = a);
-    renderAdminAccountsList();
+    list.innerHTML = accounts.length ? accounts.map(a => {
+      adminAccountRegistry[a.id] = a;
+      const locked = a.status === "sold" || a.status === "deleted";
+      return `
+      <div class="admin-row">
+        <div class="admin-row-info">
+          <b>${a.title}</b>
+          <span class="meta">${(a.server && a.server.name) || "—"} · LVL ${a.level} · ${fmt(a.price)} ₽ · ${a.status}</span>
+          ${locked ? `<span class="admin-locked-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Товар уже куплен, редактировать нельзя
+          </span>` : ""}
+        </div>
+        <div class="admin-row-actions">
+          ${locked ? "" : `<button onclick="openEditAccount('${a.id}')">Редактировать</button>`}
+          <button class="danger" onclick="deleteAccount('${a.id}')">Удалить</button>
+        </div>
+      </div>`;
+    }).join("") : '<div class="empty">Товаров пока нет.</div>';
   } catch (e) {
     list.innerHTML = `<div class="empty">Ошибка: ${e.message}</div>`;
   }
@@ -2124,20 +2181,10 @@ async function addAccount(e) {
 async function deleteAccount(id) {
   if (!confirm("Удалить товар?")) return;
   try {
-    const result = await adminFetch("/api/admin/accounts", { method: "DELETE", body: JSON.stringify({ id }) });
+    await adminFetch("/api/admin/accounts", { method: "DELETE", body: JSON.stringify({ id }) });
     loadAdminAccounts();
     loadHome();
-    if (result?.archived) {
-      showAdminError("Товар уже куплен — удалить его совсем нельзя, иначе пропадёт история покупки у клиента. Он скрыт из каталога и помечен ниже как «уже куплен».");
-    }
-  } catch (e) { showAdminError(e.message); }
-}
-function showAdminError(message) {
-  document.getElementById("admin-error-text").textContent = message || "Что-то пошло не так.";
-  document.getElementById("admin-error-overlay").classList.add("active");
-}
-function closeAdminError() {
-  document.getElementById("admin-error-overlay").classList.remove("active");
+  } catch (e) { alert(e.message); }
 }
 
 async function openEditAccount(id) {
