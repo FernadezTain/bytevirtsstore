@@ -26,7 +26,7 @@
   *{box-sizing:border-box;}
   html{color-scheme:dark;}
   body{
-    margin:0; min-height:100dvh; color:var(--text); font-family:var(--font-body);
+    margin:0; min-height:var(--tg-vh, 100dvh); color:var(--text); font-family:var(--font-body);
     -webkit-font-smoothing:antialiased;
     background:
       radial-gradient(1100px 600px at 12% -10%, rgba(255,61,31,.16), transparent 60%),
@@ -51,7 +51,8 @@
   .guarantee{display:flex; align-items:center; gap:6px; border:1px solid var(--border); background:var(--surface); border-radius:999px; padding:6px 12px; font-size:11px; color:var(--text-muted);}
   .guarantee svg{color:var(--success);}
 
-  main{padding-bottom:112px; padding-top:16px; min-height:100dvh;}
+  main{padding-bottom:112px; padding-top:16px; min-height:var(--tg-vh, 100dvh);}
+  #page-admin.active{padding-bottom:160px;}
   .page{display:none; animation:fadeUp .4s cubic-bezier(.22,1,.36,1) both;}
   .page.active{display:block;}
   @keyframes fadeUp{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
@@ -2364,11 +2365,20 @@ function initCookieBanner() {
 }
 
 /* инициализация */
+function applyTelegramViewportHeight() {
+  const tg = window.Telegram?.WebApp;
+  if (!tg) return;
+  const h = tg.viewportStableHeight || tg.viewportHeight;
+  if (h) document.documentElement.style.setProperty("--tg-vh", `${h}px`);
+}
+
 (async () => {
   const tg = window.Telegram?.WebApp;
   if (tg) {
     tg.ready();
     tg.expand();
+    applyTelegramViewportHeight();
+    tg.onEvent("viewportChanged", applyTelegramViewportHeight);
   }
   await initSupabase();
   await loadHome();
