@@ -1,7 +1,7 @@
 import { requireUser } from '../_admin.js';
 import crypto from 'crypto';
 
-const MIN_RUB = 1;
+const MIN_RUB = 10;
 
 export default async function handler(req, res) {
   try {
