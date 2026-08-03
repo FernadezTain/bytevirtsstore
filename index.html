@@ -404,6 +404,12 @@
     background:linear-gradient(135deg,#ffc94a,#ff8a1f);
     box-shadow:0 6px 18px rgba(255,176,32,.45);
   }
+  .method-icon.yookassa-icon, .method-select-icon.filled.yookassa-icon{
+    background:linear-gradient(135deg,#5B57F5,#7B4DE0);
+    box-shadow:0 6px 18px rgba(91,87,245,.4);
+    font-family:var(--font-display); font-size:20px; color:#fff;
+    display:flex; align-items:center; justify-content:center;
+  }
   .method-select-text{flex:1; min-width:0;}
   .method-select-title{font-size:11px; color:var(--text-faint); margin-bottom:2px;}
   .method-select-value{font-size:14px; font-weight:600; color:var(--text-muted);}
@@ -892,13 +898,13 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
         <input id="topup-amount" type="number" min="15" placeholder="Сумма пополнения" />
       </div>
-      <p class="amount-hint">Минимальная сумма пополнения - 15 ₽</p>
+      <p class="amount-hint">Минимальная сумма пополнения - 10 ₽</p>
 
-      <button type="button" class="btn-primary" style="width:100%; margin-top:16px;" disabled>Оплатить</button>
+      <button type="button" class="btn-primary" style="width:100%; margin-top:16px;" id="yookassa-pay-btn" onclick="payWithYookassa()">Оплатить</button>
 
       <div class="topup-notice">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
-        Возможность пополнения будет позже
+        Вы будете перенаправлены на защищённую страницу оплаты ЮKassa
       </div>
     </div>
 
@@ -939,13 +945,11 @@
       </button>
     </div>
 
-    <div class="method-option" id="method-yoomoney" onclick="pickMethod('yoomoney', this)">
-      <div class="method-icon">
-        <img src="assets/yoomoney-logo.png" alt="ЮMoney" style="width:60%; height:60%; object-fit:contain;" />
-      </div>
+    <div class="method-option" id="method-yookassa" onclick="pickMethod('yookassa', this)">
+      <div class="method-icon yookassa-icon">Ю</div>
       <div class="method-info">
-        <div class="method-name">ЮMoney</div>
-        <div class="method-sub">Перевод с карты или кошелька</div>
+        <div class="method-name">ЮKassa</div>
+        <div class="method-sub">Банковская карта, СБП</div>
       </div>
       <div class="method-check" style="display:none;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>
@@ -1483,9 +1487,9 @@ let pendingMethod = null;
 let selectedMethod = null;
 
 const paymentMethods = {
-  yoomoney: {
-    name: "ЮMoney",
-    iconHTML: `<img src="assets/yoomoney-logo.png" alt="ЮMoney" style="width:100%; height:100%; object-fit:cover;" />`
+  yookassa: {
+    name: "ЮKassa",
+    iconHTML: `<span style="font-family:var(--font-display); font-size:20px; color:#fff;">Ю</span>`
   },
   stars: {
     name: "Telegram Stars",
@@ -1565,6 +1569,41 @@ function goToLoginFromAuthRequired() {
   document.getElementById("product-overlay")?.classList.remove("active");
   document.getElementById("topup-overlay")?.classList.remove("active");
   goTo("profile");
+}
+
+async function payWithYookassa() {
+  const input = document.getElementById("topup-amount");
+  const amount = Number(input.value);
+  if (!Number.isFinite(amount) || amount < 1) {
+    alert("Минимальная сумма пополнения — 10 ₽");
+    return;
+  }
+
+  if (!supabaseClient) { alert("Нет подключения к серверу"); return; }
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (!session) {
+    showAuthRequired("Войдите в аккаунт, чтобы пополнить баланс.");
+    return;
+  }
+
+  const btn = document.getElementById("yookassa-pay-btn");
+  btn.disabled = true;
+  btn.textContent = "Создание платежа...";
+  try {
+    try { localStorage.setItem("pendingTopupAmount", String(amount)); } catch (e) {}
+    const res = await fetch("/api/yookassa/create-payment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
+      body: JSON.stringify({ amount })
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.error || "Не удалось создать платёж");
+    window.location.href = json.confirmation_url;
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = "Оплатить";
+    alert(e.message);
+  }
 }
 
 async function payWithStars() {
@@ -2019,7 +2058,7 @@ function confirmMethod() {
   selectedMethod = pendingMethod;
   const m = paymentMethods[selectedMethod];
   const icon = document.getElementById("method-select-icon");
-  icon.className = "method-select-icon filled" + (selectedMethod === "stars" ? " stars-icon" : "");
+  icon.className = "method-select-icon filled" + (selectedMethod === "stars" ? " stars-icon" : " yookassa-icon");
   icon.innerHTML = m.iconHTML;
   const valueEl = document.getElementById("method-select-value");
   valueEl.textContent = m.name;
@@ -2422,6 +2461,19 @@ function syncNavHeight() {
 }
 window.addEventListener("resize", syncNavHeight);
 window.addEventListener("orientationchange", () => setTimeout(syncNavHeight, 200));
+function checkYookassaReturn() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("topup") !== "success") return;
+  let amount = 0;
+  try { amount = Number(localStorage.getItem("pendingTopupAmount")) || 0; } catch (e) {}
+  history.replaceState({}, "", window.location.pathname);
+  setTimeout(async () => {
+    await refreshBalanceFromServer();
+    showTopupSuccess(amount);
+    try { localStorage.removeItem("pendingTopupAmount"); } catch (e) {}
+  }, 1200);
+}
+
 (async () => {
   const tg = window.Telegram?.WebApp;
   if (tg) {
@@ -2433,6 +2485,7 @@ window.addEventListener("orientationchange", () => setTimeout(syncNavHeight, 200
   syncNavHeight();
   setTimeout(syncNavHeight, 300);
   await initSupabase();
+  checkYookassaReturn();
   await loadHome();
   window.__homeLoaded = true;
   initCookieBanner();
