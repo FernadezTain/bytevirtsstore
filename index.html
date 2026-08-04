@@ -1904,20 +1904,30 @@ async function getTransactions() {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return [];
 
-    const [paymentsRes, purchasesRes] = await Promise.all([
+    const [starsRes, yookassaRes, purchasesRes] = await Promise.all([
       supabaseClient.from("star_payments").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+      supabaseClient.from("yookassa_payments").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabaseClient.from("purchases").select("*, account:accounts(title)").eq("buyer_id", user.id).order("created_at", { ascending: false })
     ]);
-    if (paymentsRes.error) console.error("Ошибка чтения star_payments:", paymentsRes.error);
+    if (starsRes.error) console.error("Ошибка чтения star_payments:", starsRes.error);
+    if (yookassaRes.error) console.error("Ошибка чтения yookassa_payments:", yookassaRes.error);
     if (purchasesRes.error) console.error("Ошибка чтения purchases:", purchasesRes.error);
 
-    const topups = (paymentsRes.data || []).map(p => ({
+    const starTopups = (starsRes.data || []).map(p => ({
       type: "topup",
       title: "Пополнение баланса",
       meta: `Telegram Stars · ${p.stars} ⭐`,
       amount: p.rub_amount,
       date: p.created_at
     }));
+    const yookassaTopups = (yookassaRes.data || []).map(p => ({
+      type: "topup",
+      title: "Пополнение баланса",
+      meta: "ЮKassa",
+      amount: p.amount,
+      date: p.created_at
+    }));
+    const topups = [...starTopups, ...yookassaTopups];
     const buys = (purchasesRes.data || []).map(p => ({
       type: "purchase",
       title: `Покупка: ${p.account?.title || "Аккаунт"}`,
@@ -2069,7 +2079,9 @@ async function payFromBalance(total) {
     return;
   }
   await addPurchaseRecords(purchased);
-  const purchasedTotal = purchased.reduce((s, i) => s + (i.price || 0), 0);
+  const purchasedRawTotal = purchased.reduce((s, i) => s + (i.price || 0), 0);
+  const purchasedDiscount = cartPromo ? Math.min(cartPromo.applied, purchasedRawTotal) : 0;
+  const purchasedTotal = Math.max(purchasedRawTotal - purchasedDiscount, 0);
 
   if (supabaseClient) {
     try {
