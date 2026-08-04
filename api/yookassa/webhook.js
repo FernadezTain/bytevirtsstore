@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../_admin.js';
+import { supabaseAdmin, applyBonusPromo } from '../_admin.js';
 
 export default async function handler(req, res) {
   try {
@@ -30,8 +30,9 @@ export default async function handler(req, res) {
     }
 
     const userId = verified.metadata?.supabase_user_id;
-    const rub = Number(verified.amount?.value);
-    if (!userId || !Number.isFinite(rub)) {
+    const baseRub = Number(verified.amount?.value);
+    const promoCode = verified.metadata?.promo_code || null;
+    if (!userId || !Number.isFinite(baseRub)) {
       console.error('YooKassa webhook: нет supabase_user_id или суммы', verified);
       return res.status(200).json({ ok: true });
     }
@@ -41,10 +42,15 @@ export default async function handler(req, res) {
       .from('yookassa_payments').select('id').eq('payment_id', paymentId).maybeSingle();
 
     if (!existing) {
+      const bonusRub = await applyBonusPromo(userId, promoCode, baseRub);
+      const totalRub = baseRub + bonusRub;
+
       const { error: insertErr } = await supabaseAdmin.from('yookassa_payments').insert({
         user_id: userId,
         payment_id: paymentId,
-        amount: rub
+        amount: totalRub,
+        promo_code: bonusRub ? promoCode : null,
+        bonus_rub: bonusRub
       });
 
       if (insertErr) {
@@ -52,7 +58,7 @@ export default async function handler(req, res) {
       } else {
         const { error: rpcErr } = await supabaseAdmin.rpc('increment_balance', {
           p_user_id: userId,
-          p_amount: rub
+          p_amount: totalRub
         });
         if (rpcErr) console.error('Ошибка зачисления баланса:', rpcErr);
       }
