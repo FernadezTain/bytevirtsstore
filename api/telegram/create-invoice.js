@@ -19,7 +19,8 @@ export default async function handler(req, res) {
     if (!botToken) return res.status(500).json({ error: 'TELEGRAM_BOT_TOKEN не настроен' });
 
     const rub = stars * RUB_PER_STAR;
-    const payload = JSON.stringify({ supabase_user_id: user.id, stars });
+    const promoCode = req.body?.promo_code ? String(req.body.promo_code).trim().toUpperCase() : null;
+    const payload = JSON.stringify({ supabase_user_id: user.id, stars, promo_code: promoCode });
 
     const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/createInvoiceLink`, {
       method: 'POST',
