@@ -459,6 +459,10 @@
   .admin-row-actions button.danger{color:var(--danger); border-color:rgba(255,92,92,.3);}
   .admin-row-actions button.danger:hover{background:rgba(255,92,92,.1);}
   .admin-locked-badge{display:inline-flex; align-items:center; gap:5px; margin-top:6px; font-size:11px; font-weight:600; color:var(--spark); background:rgba(255,176,32,.12); border:1px solid rgba(255,176,32,.25); border-radius:8px; padding:4px 8px;}
+  .promo-badge{display:inline-flex; align-items:center; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:999px; margin-left:6px;}
+  .promo-badge.discount{color:var(--accent); background:rgba(255,61,31,.14);}
+  .promo-badge.bonus{color:var(--success); background:rgba(53,214,143,.14);}
+  .promo-badge.inactive{color:var(--text-faint); background:var(--bg-elevated);}
 
   @media (min-width:480px){
     .admin-form-grid.two-col{grid-template-columns:1fr 1fr;}
@@ -699,6 +703,7 @@
     <div class="admin-tabs">
       <button class="admin-tab active" data-tab="accounts" onclick="switchAdminTab('accounts', this)">Товары</button>
       <button class="admin-tab" data-tab="servers" onclick="switchAdminTab('servers', this)">Сервера</button>
+      <button class="admin-tab" data-tab="promocodes" onclick="switchAdminTab('promocodes', this)">Промокоды</button>
     </div>
 
     <div id="admin-tab-accounts" class="admin-tab-panel active">
@@ -717,6 +722,7 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/></svg>
             <textarea id="new-acc-description" placeholder="Полное описание товара: что входит в аккаунт, история, особенности..."></textarea>
           </div>
+          <button type="button" class="btn-secondary span-2" style="margin-bottom:0;" onclick="insertProductTemplate('new-acc-description')">+ Вставить шаблон товара</button>
           <div class="auth-input textarea-wrap span-2">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15v2m0-13a4 4 0 0 0-4 4v3H7a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2h-1V8a4 4 0 0 0-4-4Z"/></svg>
             <textarea id="new-acc-secret" placeholder="Данные товара после оплаты: логин, пароль и т.д. (видно только покупателю)"></textarea>
@@ -747,6 +753,36 @@
       </div>
       <p class="admin-list-title">Список серверов</p>
       <div id="admin-servers-list"></div>
+    </div>
+
+    <div id="admin-tab-promocodes" class="admin-tab-panel">
+      <div class="admin-card">
+        <form class="admin-form-grid two-col" onsubmit="createPromocode(event)">
+          <div class="auth-input span-2"><input id="promo-code-input" type="text" placeholder="Промокод (например, SALE10)" required style="text-transform:uppercase;" /></div>
+
+          <div class="select-wrap"><select id="promo-type" onchange="onPromoTypeChange()">
+            <option value="discount">Скидочный</option>
+            <option value="bonus">Бонусный</option>
+          </select></div>
+          <div class="select-wrap"><select id="promo-value-type">
+            <option value="amount">Сумма, ₽</option>
+            <option value="percent">Процент, %</option>
+          </select></div>
+
+          <div class="auth-input"><input id="promo-value" type="number" min="1" placeholder="Значение" required /></div>
+          <div class="auth-input" id="promo-min-wrap" style="display:none;"><input id="promo-min-amount" type="number" min="0" placeholder="Мин. сумма пополнения, ₽" /></div>
+
+          <label class="check-row"><input id="promo-limit-count-enabled" type="checkbox" onchange="document.getElementById('promo-count-wrap').style.display=this.checked?'flex':'none'" /> Ограничить кол-во активаций</label>
+          <div class="auth-input" id="promo-count-wrap" style="display:none;"><input id="promo-max-activations" type="number" min="1" placeholder="Максимум активаций" /></div>
+
+          <label class="check-row"><input id="promo-limit-date-enabled" type="checkbox" onchange="document.getElementById('promo-date-wrap').style.display=this.checked?'flex':'none'" /> Ограничить по дате</label>
+          <div class="auth-input" id="promo-date-wrap" style="display:none;"><input id="promo-expires-at" type="date" /></div>
+
+          <button type="submit" class="btn-primary span-2">Создать промокод</button>
+        </form>
+      </div>
+      <p class="admin-list-title">Список промокодов</p>
+      <div id="admin-promocodes-list"></div>
     </div>
   </section>
 
@@ -857,6 +893,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/></svg>
         <textarea id="edit-acc-description" placeholder="Полное описание товара: что входит в аккаунт, история, особенности..."></textarea>
       </div>
+      <button type="button" class="btn-secondary span-2" style="margin-bottom:0;" onclick="insertProductTemplate('edit-acc-description')">+ Вставить шаблон товара</button>
       <div class="auth-input textarea-wrap span-2">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15v2m0-13a4 4 0 0 0-4 4v3H7a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2h-1V8a4 4 0 0 0-4-4Z"/></svg>
         <textarea id="edit-acc-secret" placeholder="Данные товара после оплаты: логин, пароль и т.д. (видно только покупателю)"></textarea>
@@ -899,6 +936,9 @@
         <input id="topup-amount" type="number" min="10" placeholder="Сумма пополнения" />
       </div>
       <p class="amount-hint">Минимальная сумма пополнения - 10 ₽</p>
+      <div class="auth-input" style="margin-top:10px;">
+        <input id="yookassa-promo-input" type="text" placeholder="Промокод на бонус (необязательно)" style="text-transform:uppercase;" />
+      </div>
 
       <button type="button" class="btn-primary" style="width:100%; margin-top:16px;" id="yookassa-pay-btn" onclick="payWithYookassa()">Оплатить</button>
 
@@ -914,9 +954,11 @@
         <input id="stars-amount" type="number" min="1" step="1" value="1" placeholder="Количество Stars" oninput="updateStarsPreview()" />
       </div>
       <p class="amount-hint">Минимум 1 Star · 1 Star = 2 ₽ · к оплате: <span id="stars-rub-preview">2 ₽</span></p>
+      <div class="auth-input" style="margin-top:10px;">
+        <input id="stars-promo-input" type="text" placeholder="Промокод на бонус (необязательно)" style="text-transform:uppercase;" />
+      </div>
 
       <button type="button" class="btn-primary" style="width:100%; margin-top:16px;" id="stars-pay-btn" onclick="payWithStars()">Оплатить Stars</button>
-
       <div class="topup-notice">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
         Оплата пройдёт во всплывающем окне Telegram Stars
@@ -1326,12 +1368,55 @@ async function renderCartPage() {
   }
   listEl.innerHTML = items.map(cartRowHTML).join("");
   const total = items.reduce((sum, i) => sum + (i.price || 0), 0);
+  const discount = cartPromo ? Math.min(cartPromo.applied, total) : 0;
+  const finalTotal = Math.max(total - discount, 0);
   summaryEl.innerHTML = `
     <div class="cart-summary">
       <div class="cart-summary-row"><span>Товаров в корзине</span><b>${items.length}</b></div>
-      <div class="cart-summary-row"><span>Итого</span><b>${fmt(total)} ₽</b></div>
+      <div class="auth-input" style="margin-bottom:10px;">
+        <input id="cart-promo-input" type="text" placeholder="Промокод на скидку" style="text-transform:uppercase;" value="${cartPromo ? cartPromo.code : ""}" ${cartPromo ? "disabled" : ""} />
+      </div>
+      ${cartPromo
+        ? `<button type="button" class="btn-secondary" style="margin-bottom:10px;" onclick="removeCartPromo()">Убрать промокод «${cartPromo.code}»</button>`
+        : `<button type="button" class="btn-secondary" style="margin-bottom:10px;" onclick="applyCartPromo()">Применить промокод</button>`}
+      <div id="cart-promo-result" style="font-size:12.5px; margin-bottom:6px; color:${cartPromo ? "var(--success)" : "var(--danger)"};"></div>
+      ${discount > 0 ? `<div class="cart-summary-row"><span>Скидка</span><b style="color:var(--success);">−${fmt(discount)} ₽</b></div>` : ""}
+      <div class="cart-summary-row"><span>Итого</span><b>${fmt(finalTotal)} ₽</b></div>
       <button type="button" class="btn-primary" style="width:100%;" onclick="openCheckout()">Перейти к оплате</button>
     </div>`;
+}
+
+let cartPromo = null;
+
+async function applyCartPromo() {
+  const input = document.getElementById("cart-promo-input");
+  const code = input.value.trim();
+  const resultEl = document.getElementById("cart-promo-result");
+  if (!code) return;
+  if (!(await isLoggedIn())) { showAuthRequired("Войдите в аккаунт, чтобы применить промокод."); return; }
+
+  const cart = getCart();
+  const total = Object.values(cart).reduce((sum, i) => sum + (i.price || 0), 0);
+
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const res = await fetch("/api/promo/check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
+      body: JSON.stringify({ code, context: "discount", amount: total })
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) { resultEl.style.color = "var(--danger)"; resultEl.textContent = json.error || "Промокод не подходит"; return; }
+    cartPromo = { code: json.code, applied: json.applied };
+    renderCartPage();
+  } catch (e) {
+    resultEl.style.color = "var(--danger)";
+    resultEl.textContent = "Ошибка проверки промокода";
+  }
+}
+function removeCartPromo() {
+  cartPromo = null;
+  renderCartPage();
 }
 /* =========================================================
    4. СТРАНИЦА «ГЛАВНАЯ»
@@ -1593,10 +1678,11 @@ async function payWithYookassa() {
   btn.textContent = "Создание платежа...";
   try {
     try { localStorage.setItem("pendingTopupAmount", String(amount)); } catch (e) {}
+    const promoCode = document.getElementById("yookassa-promo-input")?.value.trim() || null;
     const res = await fetch("/api/yookassa/create-payment", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
-      body: JSON.stringify({ amount })
+      body: JSON.stringify({ amount, promo_code: promoCode })
     });
     const json = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(json.error || "Не удалось создать платёж");
@@ -1633,10 +1719,11 @@ async function payWithStars() {
   btn.disabled = true;
   btn.textContent = "Создание счёта...";
   try {
+    const promoCode = document.getElementById("stars-promo-input")?.value.trim() || null;
     const res = await fetch("/api/telegram/create-invoice", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
-      body: JSON.stringify({ stars })
+      body: JSON.stringify({ stars, promo_code: promoCode })
     });
     const json = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(json.error || "Не удалось создать счёт");
@@ -1904,9 +1991,10 @@ function openCheckout() {
   const cart = getCart();
   const items = Object.values(cart);
   if (!items.length) return;
-  const total = items.reduce((sum, i) => sum + (i.price || 0), 0);
+  const rawTotal = items.reduce((sum, i) => sum + (i.price || 0), 0);
+  const discount = cartPromo ? Math.min(cartPromo.applied, rawTotal) : 0;
+  const total = Math.max(rawTotal - discount, 0);
   const balance = getUserBalance();
-
   if (balance >= total) {
     document.getElementById("checkout-body").innerHTML = `
       <p style="font-size:14px; color:var(--text-muted); margin:0 0 16px;">Оплата с баланса аккаунта.</p>
@@ -2005,6 +2093,7 @@ async function payFromBalance(total) {
   const cartAfter = getCart();
   purchased.forEach(item => delete cartAfter[item.id]);
   saveCart(cartAfter);
+  cartPromo = null;
   if (document.getElementById("page-cart").classList.contains("active")) renderCartPage();
 
   const failNote = unavailable.length
@@ -2080,6 +2169,7 @@ function openAdmin() {
   document.getElementById("page-admin").classList.add("active");
   loadAdminServers();
   loadAdminAccounts();
+  loadAdminPromocodes();
 }
 function closeAdmin() {
   document.getElementById("page-admin").classList.remove("active");
@@ -2090,6 +2180,84 @@ function switchAdminTab(tab, btn) {
   btn.classList.add("active");
   document.getElementById("admin-tab-accounts").classList.toggle("active", tab === "accounts");
   document.getElementById("admin-tab-servers").classList.toggle("active", tab === "servers");
+  document.getElementById("admin-tab-promocodes").classList.toggle("active", tab === "promocodes");
+}
+
+function onPromoTypeChange() {
+  const isBonus = document.getElementById("promo-type").value === "bonus";
+  document.getElementById("promo-min-wrap").style.display = isBonus ? "flex" : "none";
+}
+
+async function loadAdminPromocodes() {
+  const list = document.getElementById("admin-promocodes-list");
+  list.innerHTML = '<div class="empty">Загрузка...</div>';
+  try {
+    const promos = await adminFetch("/api/admin/promocodes");
+    list.innerHTML = promos.length ? promos.map(p => {
+      const valueStr = p.value_type === "percent" ? `${p.value}%` : `${fmt(p.value)} ₽`;
+      const limitStr = p.max_activations != null ? `${p.activations_count}/${p.max_activations} активаций` : `${p.activations_count} активаций (без лимита)`;
+      const dateStr = p.expires_at ? `до ${new Date(p.expires_at).toLocaleDateString("ru-RU")}` : "бессрочно";
+      const minStr = p.type === "bonus" && p.min_amount > 0 ? ` · от ${fmt(p.min_amount)} ₽` : "";
+      return `
+      <div class="admin-row">
+        <div class="admin-row-info">
+          <b>${p.code} <span class="promo-badge ${p.type} ${p.is_active ? "" : "inactive"}">${p.type === "discount" ? "Скидка" : "Бонус"}${p.is_active ? "" : " · выкл"}</span></b>
+          <span class="meta">${valueStr}${minStr} · ${limitStr} · ${dateStr}</span>
+        </div>
+        <div class="admin-row-actions">
+          <button onclick="togglePromocode('${p.id}', ${!p.is_active})">${p.is_active ? "Выключить" : "Включить"}</button>
+          <button class="danger" onclick="deletePromocode('${p.id}')">Удалить</button>
+        </div>
+      </div>`;
+    }).join("") : '<div class="empty">Промокодов пока нет.</div>';
+  } catch (e) {
+    list.innerHTML = `<div class="empty">Ошибка: ${e.message}</div>`;
+  }
+}
+
+async function createPromocode(e) {
+  e.preventDefault();
+  const code = document.getElementById("promo-code-input").value.trim();
+  const type = document.getElementById("promo-type").value;
+  const value_type = document.getElementById("promo-value-type").value;
+  const value = document.getElementById("promo-value").value;
+  const min_amount = document.getElementById("promo-min-amount").value;
+  const max_activations = document.getElementById("promo-limit-count-enabled").checked
+    ? document.getElementById("promo-max-activations").value : null;
+  const expires_at_raw = document.getElementById("promo-limit-date-enabled").checked
+    ? document.getElementById("promo-expires-at").value : null;
+  const expires_at = expires_at_raw ? new Date(expires_at_raw + "T23:59:59").toISOString() : null;
+
+  try {
+    await adminFetch("/api/admin/promocodes", {
+      method: "POST",
+      body: JSON.stringify({ code, type, value_type, value, min_amount, max_activations, expires_at })
+    });
+    document.getElementById("promo-code-input").value = "";
+    document.getElementById("promo-value").value = "";
+    document.getElementById("promo-min-amount").value = "";
+    document.getElementById("promo-max-activations").value = "";
+    document.getElementById("promo-expires-at").value = "";
+    document.getElementById("promo-limit-count-enabled").checked = false;
+    document.getElementById("promo-limit-date-enabled").checked = false;
+    document.getElementById("promo-count-wrap").style.display = "none";
+    document.getElementById("promo-date-wrap").style.display = "none";
+    loadAdminPromocodes();
+  } catch (e) { alert(e.message); }
+}
+
+async function togglePromocode(id, is_active) {
+  try {
+    await adminFetch("/api/admin/promocodes", { method: "PUT", body: JSON.stringify({ id, is_active }) });
+    loadAdminPromocodes();
+  } catch (e) { alert(e.message); }
+}
+async function deletePromocode(id) {
+  if (!confirm("Удалить промокод?")) return;
+  try {
+    await adminFetch("/api/admin/promocodes", { method: "DELETE", body: JSON.stringify({ id }) });
+    loadAdminPromocodes();
+  } catch (e) { alert(e.message); }
 }
 /* --- Сервера (категории) --- */
 async function loadAdminServers() {
@@ -2143,6 +2311,15 @@ async function deleteServer(id) {
     loadAdminServers();
     loadHome();
   } catch (e) { alert(e.message); }
+}
+
+function insertProductTemplate(textareaId) {
+  const template = "Баланс:\nБаланс Black Coins:\nСтоимость имущества:\nСтатус вип:\nНаграды(reward:)";
+  const ta = document.getElementById(textareaId);
+  if (!ta) return;
+  const existing = ta.value.trim();
+  ta.value = existing ? `${existing}\n${template}` : template;
+  ta.focus();
 }
 
 const MAX_PHOTO_ROWS = 10;
