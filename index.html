@@ -450,6 +450,23 @@
   .topup-notice svg{flex-shrink:0; margin-top:1px;}
 
   .admin-row{display:flex; align-items:center; justify-content:space-between; gap:12px; border:1px solid var(--border-soft); background:var(--surface); border-radius:14px; padding:14px; margin-bottom:8px; font-size:13px;}
+
+  /* promo stats modal */
+  .promo-stats-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:18px;}
+  .promo-stats-grid .stat-box{position:relative; overflow:hidden;}
+  .promo-stats-grid .stat-box::before{content:""; position:absolute; inset:0; background:linear-gradient(135deg, var(--accent-soft), transparent 60%); opacity:.5; pointer-events:none;}
+  .promo-chart-card{border:1px solid var(--border-soft); background:var(--bg-elevated); border-radius:16px; padding:16px 14px 12px; margin-bottom:16px;}
+  .promo-chart-title{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .promo-chart-title span{font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-faint);}
+  .promo-chart-title b{font-family:var(--font-mono); font-size:12px; color:var(--text-muted);}
+  .promo-chart-bars{display:flex; align-items:flex-end; gap:5px; height:120px;}
+  .promo-chart-col{flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; gap:6px;}
+  .promo-chart-bar{width:100%; max-width:26px; border-radius:6px 6px 3px 3px; background:linear-gradient(180deg, var(--accent-2), var(--accent)); box-shadow:0 0 14px rgba(255,61,31,.35); min-height:4px; transition:transform .2s; position:relative;}
+  .promo-chart-bar:hover{transform:scaleY(1.03); filter:brightness(1.1);}
+  .promo-chart-col-label{font-size:9.5px; color:var(--text-faint); white-space:nowrap;}
+  .promo-chart-bar-count{font-family:var(--font-mono); font-size:10px; color:var(--text-muted); margin-bottom:2px;}
+  .promo-stats-meta{display:flex; flex-wrap:wrap; gap:6px 14px; font-size:12px; color:var(--text-muted); margin-bottom:4px;}
+  .promo-stats-meta b{color:#fff; font-weight:600;}
   .admin-row-info{min-width:0; flex:1;}
   .admin-row-info b{display:block; font-size:13px; color:var(--text); margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .admin-row-info .meta{display:block; margin-top:2px; font-size:12px; color:var(--text-faint);}
@@ -1042,6 +1059,18 @@
       </button>
     </div>
     <div id="purchase-detail-body"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="promo-stats-overlay" onclick="if(event.target===this) closePromoStats()">
+  <div class="modal-sheet" style="max-width:480px;">
+    <div class="modal-head">
+      <h2 id="promo-stats-title">Статистика</h2>
+      <button class="modal-close" onclick="closePromoStats()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="promo-stats-body"></div>
   </div>
 </div>
 
@@ -2217,6 +2246,7 @@ async function loadAdminPromocodes() {
           <span class="meta">${valueStr}${minStr} · ${limitStr} · ${dateStr}</span>
         </div>
         <div class="admin-row-actions">
+          <button onclick="openPromoStats('${p.id}', '${p.code}')">📊 Статистика</button>
           <button onclick="togglePromocode('${p.id}', ${!p.is_active})">${p.is_active ? "Выключить" : "Включить"}</button>
           <button class="danger" onclick="deletePromocode('${p.id}')">Удалить</button>
         </div>
@@ -2270,6 +2300,82 @@ async function deletePromocode(id) {
     await adminFetch("/api/admin/promocodes", { method: "DELETE", body: JSON.stringify({ id }) });
     loadAdminPromocodes();
   } catch (e) { alert(e.message); }
+}
+
+async function openPromoStats(id, code) {
+  document.getElementById("promo-stats-title").textContent = `Статистика · ${code}`;
+  document.getElementById("promo-stats-body").innerHTML = '<div class="empty">Загрузка...</div>';
+  document.getElementById("promo-stats-overlay").classList.add("active");
+  try {
+    const s = await adminFetch(`/api/admin/promo-stats?id=${encodeURIComponent(id)}`);
+    document.getElementById("promo-stats-body").innerHTML = promoStatsHTML(s);
+  } catch (e) {
+    document.getElementById("promo-stats-body").innerHTML = `<div class="empty">Ошибка: ${e.message}</div>`;
+  }
+}
+function closePromoStats() {
+  document.getElementById("promo-stats-overlay").classList.remove("active");
+}
+
+function promoStatsHTML(s) {
+  const p = s.promo;
+  const isBonus = p.type === "bonus";
+  const lastUsedStr = s.lastUsedAt
+    ? new Date(s.lastUsedAt).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+    : "ещё не использовался";
+
+  const chart = s.daily.length ? (() => {
+    const max = Math.max(...s.daily.map(d => d.count), 1);
+    const days = s.daily.slice(-14); // последние 14 дней с активностью
+    const cols = days.map(d => {
+      const h = Math.round((d.count / max) * 100);
+      const label = new Date(d.date + "T00:00:00").toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" });
+      return `
+        <div class="promo-chart-col">
+          <div class="promo-chart-bar-count">${d.count}</div>
+          <div class="promo-chart-bar" style="height:${h}%;" title="${label}: ${d.count} активаций"></div>
+          <div class="promo-chart-col-label">${label}</div>
+        </div>`;
+    }).join("");
+    return `
+      <div class="promo-chart-card">
+        <div class="promo-chart-title">
+          <span>Активации по дням</span>
+          <b>${days.length < s.daily.length ? "последние 14 дней" : "весь период"}</b>
+        </div>
+        <div class="promo-chart-bars">${cols}</div>
+      </div>`;
+  })() : `<div class="empty" style="margin-bottom:16px;">Активаций пока не было — график появится после первого использования.</div>`;
+
+  return `
+    <div class="promo-stats-meta">
+      <span>Тип: <b>${isBonus ? "Бонус к пополнению" : "Скидка на покупку"}</b></span>
+      <span>Значение: <b>${p.value_type === "percent" ? p.value + "%" : fmt(p.value) + " ₽"}</b></span>
+      <span>Статус: <b style="color:${p.is_active ? "var(--success)" : "var(--danger)"};">${p.is_active ? "Активен" : "Выключен"}</b></span>
+    </div>
+    <div class="promo-stats-meta" style="margin-bottom:16px;">Последняя активация: <b>${lastUsedStr}</b></div>
+
+    ${chart}
+
+    <div class="promo-stats-grid">
+      <div class="stat-box">
+        <div class="stat-label">Всего активаций</div>
+        <div class="stat-value">${s.totalUses}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Уникальных пользователей</div>
+        <div class="stat-value">${s.uniqueUsers}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">${isBonus ? "Начислено бонусов" : "Сумма скидок"}</div>
+        <div class="stat-value">${fmt(s.totalApplied)} ₽</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Средняя выгода</div>
+        <div class="stat-value">${fmt(Math.round(s.avgApplied))} ₽</div>
+      </div>
+    </div>
+  `;
 }
 /* --- Сервера (категории) --- */
 async function loadAdminServers() {
