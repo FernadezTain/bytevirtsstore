@@ -37,7 +37,10 @@ export default async function handler(req, res) {
         capture: true,
         confirmation: { type: 'redirect', return_url: returnUrl },
         description: `Пополнение баланса ByteVirts на ${amount} ₽`,
-        metadata: { supabase_user_id: user.id }
+        metadata: {
+          supabase_user_id: user.id,
+          promo_code: req.body?.promo_code ? String(req.body.promo_code).trim().toUpperCase() : ''
+        }
       })
     });
 
