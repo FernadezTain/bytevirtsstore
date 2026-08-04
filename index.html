@@ -459,14 +459,26 @@
   .promo-chart-title{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
   .promo-chart-title span{font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-faint);}
   .promo-chart-title b{font-family:var(--font-mono); font-size:12px; color:var(--text-muted);}
-  .promo-chart-bars{display:flex; align-items:flex-end; gap:5px; height:120px;}
-  .promo-chart-col{flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; gap:6px;}
+  .promo-chart-bars{display:flex; align-items:flex-end; gap:5px; height:120px; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:2px;}
+  .promo-chart-bars::-webkit-scrollbar{display:none;}
+  .promo-chart-col{flex:0 0 auto; width:30px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; gap:6px; scroll-snap-align:end;}
   .promo-chart-bar{width:100%; max-width:26px; border-radius:6px 6px 3px 3px; background:linear-gradient(180deg, var(--accent-2), var(--accent)); box-shadow:0 0 14px rgba(255,61,31,.35); min-height:4px; transition:transform .2s; position:relative;}
-  .promo-chart-bar:hover{transform:scaleY(1.03); filter:brightness(1.1);}
+  .promo-chart-bar:active{transform:scaleY(1.03); filter:brightness(1.1);}
   .promo-chart-col-label{font-size:9.5px; color:var(--text-faint); white-space:nowrap;}
   .promo-chart-bar-count{font-family:var(--font-mono); font-size:10px; color:var(--text-muted); margin-bottom:2px;}
   .promo-stats-meta{display:flex; flex-wrap:wrap; gap:6px 14px; font-size:12px; color:var(--text-muted); margin-bottom:4px;}
   .promo-stats-meta b{color:#fff; font-weight:600;}
+  .promo-chart-hint{display:none; font-size:10px; color:var(--text-faint); text-align:center; margin-top:6px;}
+  @media (hover:hover){ .promo-chart-bar:hover{transform:scaleY(1.03); filter:brightness(1.1);} }
+  @media (max-width:480px){
+    #promo-stats-overlay .modal-sheet{padding:18px 14px; border-radius:20px;}
+    .promo-stats-grid{gap:8px;}
+    .promo-stats-grid .stat-box{padding:11px;}
+    .promo-stats-grid .stat-value{font-size:15px;}
+    .promo-chart-card{padding:14px 10px 10px;}
+    .promo-chart-bars{height:100px;}
+    .promo-chart-hint{display:block;}
+  }
   .admin-row-info{min-width:0; flex:1;}
   .admin-row-info b{display:block; font-size:13px; color:var(--text); margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .admin-row-info .meta{display:block; margin-top:2px; font-size:12px; color:var(--text-faint);}
@@ -2344,6 +2356,7 @@ function promoStatsHTML(s) {
           <b>${days.length < s.daily.length ? "последние 14 дней" : "весь период"}</b>
         </div>
         <div class="promo-chart-bars">${cols}</div>
+        ${days.length > 6 ? '<div class="promo-chart-hint">← смахните, чтобы увидеть остальные дни →</div>' : ""}
       </div>`;
   })() : `<div class="empty" style="margin-bottom:16px;">Активаций пока не было — график появится после первого использования.</div>`;
 
