@@ -1,4 +1,4 @@
-import { supabaseAdmin } from '../_admin.js';
+import { supabaseAdmin, applyBonusPromo } from '../_admin.js';
 
 const RUB_PER_STAR = 2;
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
@@ -146,13 +146,17 @@ export default async function handler(req, res) {
         .maybeSingle();
 
       if (!existing) {
-        const rub = payload.stars * RUB_PER_STAR;
+        const baseRub = payload.stars * RUB_PER_STAR;
+        const bonusRub = await applyBonusPromo(payload.supabase_user_id, payload.promo_code, baseRub);
+        const totalRub = baseRub + bonusRub;
 
         const { error: insertErr } = await supabaseAdmin.from('star_payments').insert({
           user_id: payload.supabase_user_id,
           telegram_charge_id: chargeId,
           stars: payload.stars,
-          rub_amount: rub
+          rub_amount: totalRub,
+          promo_code: bonusRub ? payload.promo_code : null,
+          bonus_rub: bonusRub
         });
 
         if (insertErr) {
@@ -160,7 +164,7 @@ export default async function handler(req, res) {
         } else {
           const { error: rpcErr } = await supabaseAdmin.rpc('increment_balance', {
             p_user_id: payload.supabase_user_id,
-            p_amount: rub
+            p_amount: totalRub
           });
           if (rpcErr) console.error('Ошибка зачисления баланса:', rpcErr);
         }
