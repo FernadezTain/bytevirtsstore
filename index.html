@@ -492,6 +492,12 @@
     .admin-row-actions button{flex:1; text-align:center;}
   }
   .admin-locked-badge{display:inline-flex; align-items:center; gap:5px; margin-top:6px; font-size:11px; font-weight:600; color:var(--spark); background:rgba(255,176,32,.12); border:1px solid rgba(255,176,32,.25); border-radius:8px; padding:4px 8px;}
+  .admin-section-toggle{width:100%; display:flex; align-items:center; justify-content:space-between; border:1px solid var(--border-soft); background:var(--surface); border-radius:14px; padding:12px 14px; margin:18px 0 8px; font-size:12.5px; font-weight:600; color:var(--text-muted); transition:color .2s, border-color .2s;}
+  .admin-section-toggle:hover{color:var(--text); border-color:var(--border);}
+  .admin-section-toggle svg{transition:transform .25s; flex-shrink:0;}
+  .admin-section-toggle.open svg{transform:rotate(180deg);}
+  .admin-section-body{display:none;}
+  .admin-section-body.open{display:block; animation:fadeUp .3s cubic-bezier(.22,1,.36,1) both;}
   .promo-badge{display:inline-flex; align-items:center; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:999px; margin-left:6px;}
   .promo-badge.discount{color:var(--accent); background:rgba(255,61,31,.14);}
   .promo-badge.bonus{color:var(--success); background:rgba(53,214,143,.14);}
@@ -2531,35 +2537,61 @@ async function populateAdminServerSelect() {
 }
 const adminAccountRegistry = {};
 
+function adminAccountRowHTML(a) {
+  adminAccountRegistry[a.id] = a;
+  const locked = a.status === "sold" || a.status === "deleted";
+  return `
+  <div class="admin-row">
+    <div class="admin-row-info">
+      <b>${a.title}</b>
+      <span class="meta">${(a.server && a.server.name) || "—"} · LVL ${a.level} · ${fmt(a.price)} ₽ · ${a.status}</span>
+      ${locked ? `<span class="admin-locked-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Товар уже куплен, редактировать нельзя
+      </span>` : ""}
+    </div>
+    <div class="admin-row-actions">
+      ${locked ? "" : `<button onclick="openEditAccount('${a.id}')">Редактировать</button>`}
+      <button class="danger" onclick="deleteAccount('${a.id}')">Удалить</button>
+    </div>
+  </div>`;
+}
+
 async function loadAdminAccounts() {
   await populateAdminServerSelect();
   const list = document.getElementById("admin-accounts-list");
   list.innerHTML = '<div class="empty">Загрузка...</div>';
   try {
     const accounts = await adminFetch("/api/admin/accounts");
-    list.innerHTML = accounts.length ? accounts.map(a => {
-      adminAccountRegistry[a.id] = a;
-      const locked = a.status === "sold" || a.status === "deleted";
-      return `
-      <div class="admin-row">
-        <div class="admin-row-info">
-          <b>${a.title}</b>
-          <span class="meta">${(a.server && a.server.name) || "—"} · LVL ${a.level} · ${fmt(a.price)} ₽ · ${a.status}</span>
-          ${locked ? `<span class="admin-locked-badge">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            Товар уже куплен, редактировать нельзя
-          </span>` : ""}
-        </div>
-        <div class="admin-row-actions">
-          ${locked ? "" : `<button onclick="openEditAccount('${a.id}')">Редактировать</button>`}
-          <button class="danger" onclick="deleteAccount('${a.id}')">Удалить</button>
-        </div>
-      </div>`;
-    }).join("") : '<div class="empty">Товаров пока нет.</div>';
+    if (!accounts.length) {
+      list.innerHTML = '<div class="empty">Товаров пока нет.</div>';
+      return;
+    }
+    const active = accounts.filter(a => a.status !== "sold" && a.status !== "deleted");
+    const done = accounts.filter(a => a.status === "sold" || a.status === "deleted");
+
+    const activeHTML = active.length
+      ? active.map(adminAccountRowHTML).join("")
+      : '<div class="empty">Активных товаров пока нет.</div>';
+
+    const doneHTML = done.length ? `
+      <button type="button" class="admin-section-toggle" onclick="this.classList.toggle('open'); this.nextElementSibling.classList.toggle('open');">
+        <span>Завершённые (продано/удалено) · ${done.length}</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="admin-section-body">${done.map(adminAccountRowHTML).join("")}</div>
+    ` : "";
+
+    list.innerHTML = `
+      <p class="admin-list-title" style="margin-top:0;">Активные · ${active.length}</p>
+      ${activeHTML}
+      ${doneHTML}
+    `;
   } catch (e) {
     list.innerHTML = `<div class="empty">Ошибка: ${e.message}</div>`;
   }
 }
+
 const NO_BIND_TAG = "Без привязок";
 function withNoBindTag(tags, checked) {
   const filtered = tags.filter(t => t.toLowerCase() !== NO_BIND_TAG.toLowerCase());
