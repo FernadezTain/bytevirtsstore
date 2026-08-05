@@ -4,9 +4,9 @@ const RUB_PER_STAR = 2;
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 // Ссылки на документы и мини-приложение (задайте свои через env или впишите напрямую)
-const SERVICE_RULES_URL = process.env.SERVICE_RULES_URL || 'https://example.com/rules';
-const PRIVACY_POLICY_URL = process.env.PRIVACY_POLICY_URL || 'https://example.com/privacy';
-const PUBLIC_OFFER_URL = process.env.PUBLIC_OFFER_URL || 'https://example.com/offer';
+const SERVICE_RULES_URL = process.env.SERVICE_RULES_URL || 'https://bytevirts.vercel.app/rules.html';
+const PRIVACY_POLICY_URL = process.env.PRIVACY_POLICY_URL || 'https://bytevirts.vercel.app/privacy.html';
+const PUBLIC_OFFER_URL = process.env.PUBLIC_OFFER_URL || 'https://bytevirts.vercel.app/offer.html';
 const MINI_APP_URL = process.env.MINI_APP_URL || 'https://bytevirts.vercel.app/';
 
 const CONSENT_TEXT =
