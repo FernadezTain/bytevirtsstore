@@ -5,8 +5,9 @@ export default async function handler(req, res) {
     const user = await requireAdmin(req);
     if (!user) return res.status(403).json({ error: 'Доступ только для администратора' });
 
-    const slugArr = Array.isArray(req.query.slug) ? req.query.slug : [req.query.slug];
-    const route = slugArr[0];
+    const pathOnly = req.url.split('?')[0];
+    const parts = pathOnly.split('/').filter(Boolean);
+    const route = parts[parts.length - 1];
 
     if (route === 'accounts') return handleAccounts(req, res);
     if (route === 'servers') return handleServers(req, res);
