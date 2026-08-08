@@ -76,7 +76,7 @@
   .status-pill.new{color:var(--spark); background:rgba(255,176,32,.14);}
   .status-pill.active{color:var(--accent-2); background:rgba(255,61,31,.14);}
   .status-pill.closed{color:var(--text-faint); background:var(--bg-elevated);}
-  .ai-tag{display:inline-block; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--accent-2); margin-bottom:10px;}
+  .ai-tag{display:inline-block; font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--accent-2); margin-bottom:5px;}
   .empty{border:1px dashed var(--border); background:var(--surface); border-radius:16px; padding:32px; text-align:center; font-size:13px; color:var(--text-muted);}
 
   /* modal */
@@ -182,7 +182,6 @@
     </div>
 
     <div id="ai-screen" style="display:none;">
-      <div class="ai-tag">ИИ ассистент</div>
       <div class="chat-box" id="ai-chat-box"></div>
       <div class="chat-input-row">
         <textarea id="ai-chat-input" rows="1" placeholder="Спросите AI-помощника..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMessage();}"></textarea>
@@ -614,8 +613,9 @@ function renderAiChat() {
     box.innerHTML = aiMessages.map(m => `
       <div class="msg-row ${m.role === "user" ? "mine" : ""}">
         <div>
+          ${m.role === "assistant" ? '<div class="ai-tag">ИИ ассистент</div>' : ""}
           <div class="msg-bubble">${m.pending ? "···" : escapeHTML(m.content)}</div>
-          <div class="msg-meta">${m.role === "user" ? "Вы" : "AI-помощник"}</div>
+          ${m.role === "user" ? '<div class="msg-meta">Вы</div>' : ""}
         </div>
       </div>`).join("");
   }
