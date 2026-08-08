@@ -1,4 +1,4 @@
-import { supabaseAdmin, requireUser } from '../_admin.js';
+import { supabaseAdmin, requireUser } from '../../lib/_admin.js';
 
 export default async function handler(req, res) {
   try {
@@ -43,7 +43,6 @@ export default async function handler(req, res) {
     if (context === 'discount') {
       applied = Math.min(applied, base);
 
-      // Скидка применяется сразу — оплата с баланса происходит мгновенно, без отдельного шага подтверждения.
       const { error: useErr } = await supabaseAdmin.from('promo_code_uses').insert({
         promo_id: promo.id, user_id: user.id, context: 'discount', base_amount: base, applied_value: applied
       });
