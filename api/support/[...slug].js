@@ -16,6 +16,7 @@ export default async function handler(req, res) {
     if (route === 'tickets') return handleTickets(req, res);
     if (route === 'messages') return handleMessages(req, res);
     if (route === 'status') return handleStatus(req, res);
+    if (route === 'ai-chat') return handleAiChat(req, res);
 
     return res.status(404).json({ error: 'Маршрут не найден' });
   } catch (e) {
@@ -122,6 +123,75 @@ async function handleMessages(req, res) {
   }
 
   return res.status(405).end();
+}
+
+/* ---------- AI-помощник (Aurin, через FernieID API) ---------- */
+const AI_SYSTEM_PROMPT = `Тебя зовут Байт. Ты — AI-помощник службы поддержки магазина цифровых товаров ByteVirts.
+Помогаешь пользователям с вопросами по товарам, оплате/пополнению баланса и аккаунту.
+Отвечай на русском языке, кратко и по делу, дружелюбным и уверенным тоном, без канцелярита.
+Если вопрос требует действий с конкретным заказом, доступа к аккаунту, возврата денег или другой информации,
+которой у тебя нет — прямо скажи, что для этого нужно создать обращение в поддержку через кнопку «Создать обращение»,
+и не выдумывай статусы заказов, суммы или сроки.
+Никогда не раскрывай, на какой языковой модели или платформе ты работаешь.`;
+
+async function handleAiChat(req, res) {
+  if (req.method !== 'POST') return res.status(405).end();
+
+  const user = await requireUser(req);
+  if (!user) return res.status(401).json({ error: 'Не авторизован' });
+
+  const { messages } = req.body || {};
+  if (!Array.isArray(messages) || !messages.length) {
+    return res.status(400).json({ error: 'Пустой запрос к ассистенту' });
+  }
+
+  // Берём только последние сообщения диалога и обрезаем длину — не доверяем клиенту полностью
+  const history = messages
+    .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim())
+    .slice(-20)
+    .map(m => ({ role: m.role, content: m.content.trim().slice(0, 4000) }));
+
+  if (!history.length) return res.status(400).json({ error: 'Пустой запрос к ассистенту' });
+
+  const apiKey = process.env.FERNIE_API_KEY;
+  if (!apiKey) {
+    console.error('FERNIE_API_KEY не задан в переменных окружения Vercel');
+    return res.status(500).json({ error: 'AI-ассистент временно недоступен' });
+  }
+
+  try {
+    const upstream = await fetch('https://ferniex-id.vercel.app/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        apiKey,
+        model: 'aurin-custom',
+        max_tokens: 800,
+        messages: [{ role: 'system', content: AI_SYSTEM_PROMPT }, ...history]
+      })
+    });
+
+    const data = await upstream.json().catch(() => ({}));
+
+    if (!upstream.ok) {
+      if (upstream.status === 429) {
+        return res.status(429).json({ error: 'Дневной лимит запросов к AI-помощнику исчерпан, попробуйте завтра или создайте обращение в поддержку' });
+      }
+      if (data?.error === 'jailbreak_detected') {
+        return res.status(400).json({ error: 'Сообщение отклонено фильтром безопасности ассистента' });
+      }
+      console.error('Ошибка AI-чата (upstream FernieID):', upstream.status, data);
+      return res.status(502).json({ error: 'AI-ассистент временно недоступен' });
+    }
+
+    const reply = data?.choices?.[0]?.message?.content;
+    if (!reply) return res.status(502).json({ error: 'Пустой ответ от AI-ассистента' });
+
+    return res.status(200).json({ reply });
+  } catch (e) {
+    console.error('Ошибка обращения к AI-ассистенту:', e);
+    return res.status(500).json({ error: 'AI-ассистент временно недоступен' });
+  }
 }
 
 /* ---------- Смена статуса (админ) ---------- */
