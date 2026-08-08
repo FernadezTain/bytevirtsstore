@@ -9,16 +9,15 @@ const CATEGORIES = ['product', 'payment', 'account', 'other'];
 
 export default async function handler(req, res) {
   try {
-    console.log('DEBUG support route:', JSON.stringify({ url: req.url, method: req.method, query: req.query }));
-
-    const slugArr = Array.isArray(req.query.slug) ? req.query.slug : [req.query.slug];
-    const route = slugArr[0];
+    const pathOnly = req.url.split('?')[0];
+    const parts = pathOnly.split('/').filter(Boolean); // ['api','support','tickets']
+    const route = parts[parts.length - 1];
 
     if (route === 'tickets') return handleTickets(req, res);
     if (route === 'messages') return handleMessages(req, res);
     if (route === 'status') return handleStatus(req, res);
 
-    return res.status(404).json({ error: `Маршрут не найден (debug: route=${JSON.stringify(route)}, slug=${JSON.stringify(req.query.slug)}, url=${req.url})` });
+    return res.status(404).json({ error: 'Маршрут не найден' });
   } catch (e) {
     console.error('Необработанная ошибка в /api/support:', e);
     return res.status(500).json({ error: e.message || 'Внутренняя ошибка сервера' });
