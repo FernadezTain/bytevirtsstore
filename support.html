@@ -223,6 +223,7 @@ let currentReviewSubtab = "active"; // 'active' | 'new' | 'closed'
 let currentTicketId = null;
 let currentTicketIsReview = false;
 let pollTimer = null;
+let lastRenderedSignature = null;
 
 function goHome() {
   window.location.href = "index.html";
@@ -412,6 +413,7 @@ async function submitTicket(e) {
 async function openTicket(id, isReview) {
   currentTicketId = id;
   currentTicketIsReview = isReview;
+  lastRenderedSignature = null;
   document.getElementById("list-screen").style.display = "none";
   document.getElementById("detail-screen").style.display = "block";
   document.getElementById("ticket-detail-body").innerHTML = '<div class="empty">Загрузка...</div>';
@@ -432,11 +434,44 @@ function stopPolling() {
   if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
 }
 
+function getChatInputState() {
+  const input = document.getElementById("chat-input");
+  if (!input) return null;
+  return {
+    value: input.value,
+    selectionStart: input.selectionStart,
+    selectionEnd: input.selectionEnd,
+    focused: document.activeElement === input
+  };
+}
+function restoreChatInputState(state) {
+  const input = document.getElementById("chat-input");
+  if (!input || !state) return;
+  input.value = state.value;
+  if (state.focused) {
+    input.focus();
+    try { input.setSelectionRange(state.selectionStart, state.selectionEnd); } catch (e) {}
+  }
+}
+
 async function loadTicketDetail(scrollToBottom) {
   if (!currentTicketId) return;
   try {
     const { ticket, messages } = await apiFetch(`/api/support/messages?ticket_id=${encodeURIComponent(currentTicketId)}`);
+
+    // Подпись состояния чата: статус + кол-во сообщений + id последнего.
+    // Если с прошлого опроса ничего не изменилось — вообще не трогаем DOM,
+    // чтобы не сбрасывать то, что человек сейчас печатает в поле ввода.
+    const lastMsg = messages.length ? messages[messages.length - 1] : null;
+    const signature = `${ticket.status}:${messages.length}:${lastMsg ? lastMsg.id : ""}`;
+    if (!scrollToBottom && signature === lastRenderedSignature) {
+      return;
+    }
+    lastRenderedSignature = signature;
+
+    const inputState = getChatInputState();
     renderTicketDetail(ticket, messages, scrollToBottom);
+    if (!scrollToBottom) restoreChatInputState(inputState);
   } catch (e) {
     document.getElementById("ticket-detail-body").innerHTML = `<div class="empty">Ошибка: ${e.message}</div>`;
     stopPolling();
